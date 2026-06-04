@@ -1,0 +1,381 @@
+﻿<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>One Games | Portal Oficial</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body class="auth-locked">
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="user-entry" href="#profile" aria-label="Abrir perfil">
+          <span class="avatar-mini" aria-hidden="true"></span>
+          <span class="username" data-user-name>Kawanone</span>
+        </a>
+
+        <nav class="nav" aria-label="Navegacao principal">
+          <a href="#home">Hub</a>
+          <a href="#events">Eventos</a>
+          <a href="#games">Games</a>
+          <a href="#shop">Shop</a>
+          <a href="#settings">Ajustes</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section id="login" class="page active">
+        <div class="login-shell">
+          <div class="login-brand">
+            <span>ONE</span>
+          </div>
+          <p class="eyebrow">Acesso ao ONE HUB</p>
+          <h1>Entre com Discord</h1>
+          <p>Conecte sua conta para acessar games, eventos, shop e perfil sincronizado.</p>
+          <button id="discordLogin" class="discord-login" type="button">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 127.14 96.36" fill="currentColor" aria-hidden="true">
+              <path d="M107.7 8.07A105.15 105.15 0 0 0 81.47 0a72.06 72.06 0 0 0-3.36 6.83 97.68 97.68 0 0 0-29.11 0A72.37 72.37 0 0 0 45.64 0a105.89 105.89 0 0 0-26.25 8.09C2.79 32.65-1.71 56.6.54 80.21a105.73 105.73 0 0 0 32.17 16.15 77.7 77.7 0 0 0 6.89-11.11 68.42 68.42 0 0 1-10.85-5.18c.91-.66 1.8-1.35 2.66-2.06a75.57 75.57 0 0 0 64.32 0c.87.71 1.76 1.4 2.66 2.06a68.68 68.68 0 0 1-10.87 5.19 77 77 0 0 0 6.89 11.1 105.25 105.25 0 0 0 32.19-16.14c2.64-27.38-4.51-51.11-18.9-72.15ZM42.45 65.69C36.18 65.69 31 60 31 53s5-12.74 11.43-12.74S54 46 53.89 53s-5.05 12.69-11.44 12.69Zm42.24 0C78.41 65.69 73.25 60 73.25 53s5-12.74 11.44-12.74S96.23 46 96.12 53s-5.04 12.69-11.43 12.69Z" />
+            </svg>
+            Entrar com Discord
+          </button>
+        </div>
+      </section>
+
+      <section id="home" class="page">
+        <div class="hero-clean">
+          <p class="eyebrow">One Games</p>
+          <h1>Jogue.<br />Compita. Conquiste.</h1>
+          <p>
+            O ecossistema de mini games da ONE. Ganhe ONE COIN, participe de eventos especiais e personalize seu perfil com itens exclusivos.
+          </p>
+          <div class="hero-actions">
+            <a class="button primary icon-button" href="#games">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M8 5.14v13.72a1 1 0 0 0 1.55.83l10.29-6.86a1 1 0 0 0 0-1.66L9.55 4.31A1 1 0 0 0 8 5.14Z" />
+              </svg>
+              Comecar a Jogar
+            </a>
+            <a class="button secondary icon-button" href="#shop">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M7 7V6a5 5 0 0 1 10 0v1h1.2a2 2 0 0 1 1.99 2.2l-.8 8A3 3 0 0 1 16.4 20H7.6a3 3 0 0 1-2.99-2.8l-.8-8A2 2 0 0 1 5.8 7H7Zm2 0h6V6a3 3 0 0 0-6 0v1Z" />
+              </svg>
+              Explorar a Loja
+            </a>
+          </div>
+        </div>
+
+        <div class="feature-grid" id="hubCards"></div>
+      </section>
+
+      <section id="events" class="page">
+        <div class="page-heading">
+          <p class="eyebrow">Eventos</p>
+          <h1>Mega eventos da comunidade</h1>
+          <p>Participe de temporadas, desafios de ranking e campanhas com shop temporario.</p>
+        </div>
+
+        <article class="event-card">
+          <div class="event-mark">*</div>
+          <div class="event-copy">
+            <span class="status">Ativo agora</span>
+            <h2>Liga dos Campeoes ONE</h2>
+            <p>Jogue diariamente para subir no ranking. Os melhores jogadores ganham bordas de avatar, titulos raros e bonus de ONE COIN.</p>
+            <div class="event-stats">
+              <span><strong>48h</strong> restantes</span>
+              <span><strong>3x</strong> ONE COIN</span>
+              <span><strong>7</strong> recompensas</span>
+            </div>
+          </div>
+          <button id="joinEvent" class="button primary">Participar</button>
+        </article>
+      </section>
+
+      <section id="games" class="page">
+        <div class="page-heading">
+          <p class="eyebrow">Games</p>
+          <h1>Jogos</h1>
+          <p>Escolha um game para jogar, apostar ONE COIN ou acompanhar os proximos lancamentos.</p>
+        </div>
+
+        <div id="gamesMenu" class="games-menu">
+          <article class="game-menu-card available" data-open-game="roulette">
+            <div id="rouletteBannerArt" class="game-menu-art roulette-art">
+              <img id="rouletteBannerImage" alt="" />
+              <span id="rouletteBannerMark">ONE</span>
+            </div>
+            <div class="game-menu-copy">
+              <span id="rouletteBannerStatus" class="game-tag">Disponivel</span>
+              <h2 id="rouletteBannerTitle">Roleta ONE</h2>
+              <p id="rouletteBannerDescription">Aposte em azul, branco ou preto em uma roleta limpa estilo cassino.</p>
+              <button class="button primary" type="button">Abrir jogo</button>
+            </div>
+          </article>
+
+          <article class="game-menu-card spoiler-card locked">
+            <div class="game-menu-art spoiler-art">
+              <span>?</span>
+            </div>
+            <div class="game-menu-copy">
+              <span class="game-tag">Spoiler</span>
+              <h2>Proximo game secreto</h2>
+              <p>Um novo modo esta sendo preparado para o cassino ONE.</p>
+              <button class="button secondary" type="button" disabled>Bloqueado</button>
+            </div>
+          </article>
+        </div>
+
+        <div id="rouletteGame" class="game-detail hidden">
+          <div class="game-detail-bar">
+            <button id="backToGames" class="button secondary" type="button">Voltar aos jogos</button>
+          </div>
+
+          <div class="games-layout">
+            <article class="roulette-panel">
+              <div class="game-header">
+                <span class="version">Teste</span>
+                <div>
+                  <h2>Roleta ONE</h2>
+                  <p>Gire para tentar ganhar moedas, tickets, multiplicadores, produtos misteriosos ou o jackpot raro.</p>
+                </div>
+              </div>
+
+              <div class="roulette-stage carousel-stage">
+                <div class="roulette-pointer carousel-pointer" aria-hidden="true"></div>
+                <div class="carousel-window" aria-label="Roleta em carrossel">
+                  <div id="rouletteWheel" class="roulette-carousel"></div>
+                </div>
+              </div>
+
+              <div class="spin-console">
+                <div class="spin-cost">
+                  <span>Custo do giro</span>
+                  <div class="payment-toggle" aria-label="Forma de pagamento do giro">
+                    <button class="active" data-payment="coins" type="button">ONE COIN</button>
+                    <button data-payment="ticket" type="button">Ticket</button>
+                  </div>
+                  <label>
+                    <strong id="paymentIcon" class="payment-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="M11.051 7.616a1 1 0 0 1 1.909.024l.737 1.452a1 1 0 0 0 .737.535l1.634.256a1 1 0 0 1 .588 1.806l-1.172 1.168a1 1 0 0 0-.282.866l.259 1.613a1 1 0 0 1-1.541 1.134l-1.465-.75a1 1 0 0 0-.912 0l-1.465.75a1 1 0 0 1-1.539-1.133l.258-1.613a1 1 0 0 0-.282-.867l-1.156-1.152a1 1 0 0 1 .572-1.822l1.633-.256a1 1 0 0 0 .737-.535z" />
+                      </svg>
+                    </strong>
+                    <input id="betAmount" type="text" value="50" readonly />
+                  </label>
+                </div>
+                <button id="spinRoulette" class="button primary spin-button" type="button">Girar roleta</button>
+                <div class="casino-balance spin-balance">
+                  <span>Saldo disponivel</span>
+                  <strong><span id="gameBalance">1.250</span> <span class="coin-inline" aria-label="ONE COIN"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M11.051 7.616a1 1 0 0 1 1.909.024l.737 1.452a1 1 0 0 0 .737.535l1.634.256a1 1 0 0 1 .588 1.806l-1.172 1.168a1 1 0 0 0-.282.866l.259 1.613a1 1 0 0 1-1.541 1.134l-1.465-.75a1 1 0 0 0-.912 0l-1.465.75a1 1 0 0 1-1.539-1.133l.258-1.613a1 1 0 0 0-.282-.867l-1.156-1.152a1 1 0 0 1 .572-1.822l1.633-.256a1 1 0 0 0 .737-.535z" /></svg></span></strong>
+                </div>
+                <div class="game-feedback" id="rouletteFeedback">Gire para revelar seu premio.</div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="shop" class="page">
+        <div class="shop-head">
+          <div>
+            <p class="eyebrow">Shop</p>
+            <h1>Personalize sua experiencia</h1>
+            <p>Compre bordas, temas e titulos usando ONE COIN.</p>
+          </div>
+          <div class="balance-chip">
+            <span>Seu saldo</span>
+            <strong><span id="shopBalance">1.250</span> <span class="coin-inline" aria-label="ONE COIN"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M11.051 7.616a1 1 0 0 1 1.909.024l.737 1.452a1 1 0 0 0 .737.535l1.634.256a1 1 0 0 1 .588 1.806l-1.172 1.168a1 1 0 0 0-.282.866l.259 1.613a1 1 0 0 1-1.541 1.134l-1.465-.75a1 1 0 0 0-.912 0l-1.465.75a1 1 0 0 1-1.539-1.133l.258-1.613a1 1 0 0 0-.282-.867l-1.156-1.152a1 1 0 0 1 .572-1.822l1.633-.256a1 1 0 0 0 .737-.535z" /></svg></span></strong>
+          </div>
+        </div>
+
+        <div class="filters" aria-label="Filtros da loja">
+          <button class="active" data-shop-filter="all" type="button">Todos os itens</button>
+          <button data-shop-filter="frame" type="button">Bordas</button>
+          <button data-shop-filter="theme" type="button">Temas</button>
+          <button data-shop-filter="title" type="button">Titulos</button>
+          <button data-shop-filter="owned" type="button">Comprados</button>
+        </div>
+
+        <div id="shopGrid" class="shop-grid"></div>
+      </section>
+
+      <section id="profile" class="page">
+        <div class="profile-dashboard">
+          <article class="profile-showcase">
+            <div class="profile-avatar-wrap">
+              <div id="profileAvatar" class="profile-avatar">K</div>
+              <span>Level 18</span>
+            </div>
+            <div class="profile-copy">
+              <p class="eyebrow">Perfil</p>
+              <h1 data-user-name>Kawanone</h1>
+              <span id="profileTitle">Novato</span>
+            </div>
+            <div class="profile-balance">
+              <span>Saldo</span>
+              <strong><span id="coinBalance">1.250</span> <span class="coin-inline" aria-label="ONE COIN"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M11.051 7.616a1 1 0 0 1 1.909.024l.737 1.452a1 1 0 0 0 .737.535l1.634.256a1 1 0 0 1 .588 1.806l-1.172 1.168a1 1 0 0 0-.282.866l.259 1.613a1 1 0 0 1-1.541 1.134l-1.465-.75a1 1 0 0 0-.912 0l-1.465.75a1 1 0 0 1-1.539-1.133l.258-1.613a1 1 0 0 0-.282-.867l-1.156-1.152a1 1 0 0 1 .572-1.822l1.633-.256a1 1 0 0 0 .737-.535z" /></svg></span></strong>
+            </div>
+          </article>
+
+          <div class="profile-stats">
+            <article>
+              <span>Ranking</span>
+              <strong>Prata</strong>
+            </article>
+            <article>
+              <span>Conquistas</span>
+              <strong>3</strong>
+            </article>
+            <article>
+              <span>Itens</span>
+              <strong id="inventoryCount">0</strong>
+            </article>
+          </div>
+
+          <article class="profile-panel equipped-panel">
+            <div class="panel-title">
+              <h2>Equipado</h2>
+              <span>Shop sync</span>
+            </div>
+            <div class="equipped-grid">
+              <div>
+                <span>Borda</span>
+                <strong id="equippedFrame">Nenhuma</strong>
+              </div>
+              <div>
+                <span>Tema</span>
+                <strong id="equippedTheme">Nenhum</strong>
+              </div>
+              <div>
+                <span>Titulo</span>
+                <strong id="equippedTitle">Novato</strong>
+              </div>
+            </div>
+          </article>
+
+          <article class="profile-panel inventory-panel">
+            <div class="panel-title">
+              <h2>Inventario</h2>
+              <span id="inventoryBadge">0 itens</span>
+            </div>
+            <div id="inventoryList" class="inventory-list">
+              <span class="empty-state">Compre itens no shop para equipar aqui.</span>
+            </div>
+          </article>
+
+          <article class="profile-panel account-panel">
+            <div>
+              <h2>Conta</h2>
+              <p>Gerencie o acesso usado para entrar no ONE HUB.</p>
+            </div>
+            <button id="discordLogout" type="button">Sair da conta Discord</button>
+          </article>
+        </div>
+      </section>
+
+      <section id="settings" class="page">
+        <div class="page-heading">
+          <p class="eyebrow">Ajustes</p>
+          <h1>Configurar Hub</h1>
+          <p>Escolha quais cards aparecem na pagina inicial como Destaque e Ao vivo.</p>
+        </div>
+
+        <div class="settings-grid">
+          <article class="settings-panel">
+            <div class="settings-copy">
+              <h2>Card destaque</h2>
+              <p>Primeiro card do Hub, usado para divulgar Games, Eventos ou Shop.</p>
+            </div>
+            <form class="hub-config" data-card="featured">
+              <label>
+                Categoria
+                <select name="target">
+                  <option value="games">Games</option>
+                  <option value="events">Eventos</option>
+                  <option value="shop">Shop</option>
+                </select>
+              </label>
+              <label>
+                Titulo
+                <input name="title" type="text" maxlength="28" />
+              </label>
+              <label>
+                Descricao
+                <textarea name="description" maxlength="120" rows="3"></textarea>
+              </label>
+            </form>
+          </article>
+
+          <article class="settings-panel">
+            <div class="settings-copy">
+              <h2>Card ao vivo</h2>
+              <p>Segundo card do Hub, ideal para campanhas ativas e chamadas urgentes.</p>
+            </div>
+            <form class="hub-config" data-card="live">
+              <label>
+                Categoria
+                <select name="target">
+                  <option value="events">Eventos</option>
+                  <option value="games">Games</option>
+                  <option value="shop">Shop</option>
+                </select>
+              </label>
+              <label>
+                Titulo
+                <input name="title" type="text" maxlength="28" />
+              </label>
+              <label>
+                Descricao
+                <textarea name="description" maxlength="120" rows="3"></textarea>
+              </label>
+            </form>
+          </article>
+
+          <article class="settings-panel">
+            <div class="settings-copy">
+              <h2>Modo visual</h2>
+              <p>Alternancia temporaria entre modo claro e escuro para testar a interface.</p>
+            </div>
+            <button id="themeToggle" class="theme-toggle" type="button">Modo escuro</button>
+          </article>
+
+          <article class="settings-panel wide">
+            <div class="settings-copy">
+              <h2>Configurar jogos</h2>
+              <p>Edite o banner da Roleta ONE exibido no menu da categoria Games.</p>
+            </div>
+            <form class="game-config" data-game="roulette">
+              <label>
+                Status
+                <select name="status">
+                  <option value="Disponivel">Disponivel</option>
+                  <option value="Evento ativo">Evento ativo</option>
+                  <option value="Teste beta">Teste beta</option>
+                  <option value="Em manutencao">Em manutencao</option>
+                </select>
+              </label>
+              <label>
+                Titulo
+                <input name="title" type="text" maxlength="28" />
+              </label>
+              <label>
+                Descricao
+                <textarea name="description" maxlength="130" rows="3"></textarea>
+              </label>
+              <label>
+                Link da imagem do banner
+                <input name="imageUrl" type="url" placeholder="https://..." />
+              </label>
+            </form>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
+
