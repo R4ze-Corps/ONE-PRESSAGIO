@@ -1,8 +1,12 @@
 ﻿const formatCoins = (value) => new Intl.NumberFormat("pt-BR").format(value);
 
 let coins = 1250;
-let isLoggedIn = localStorage.getItem("oneDiscordSession") === "connected";
-const discordUser = {
+let testModeFree = false;
+const DISCORD_CLIENT_ID = "COLOQUE_SEU_CLIENT_ID_AQUI";
+const DISCORD_API = "https://discord.com/api";
+let discordSession = readDiscordSession();
+let isLoggedIn = Boolean(discordSession?.accessToken);
+let discordUser = discordSession?.user || {
   name: "Kawanone",
   avatarInitial: "K",
 };
@@ -33,6 +37,7 @@ const equippedTheme = document.querySelector("#equippedTheme");
 const equippedTitle = document.querySelector("#equippedTitle");
 const discordLogin = document.querySelector("#discordLogin");
 const discordLogout = document.querySelector("#discordLogout");
+const testModeToggle = document.querySelector("#testModeToggle");
 const themeToggle = document.querySelector("#themeToggle");
 const rouletteWheel = document.querySelector("#rouletteWheel");
 const spinRoulette = document.querySelector("#spinRoulette");
@@ -67,6 +72,36 @@ const carouselRounds = 4;
 const carouselPattern = ["coins", "ticket", "retry", "coins", "multiplier", "ticket", "coins", "retry", "jackpot", "ticket", "coins", "multiplier"];
 const coinIconSvg =
   '<span class="coin-inline" aria-label="ONE COIN"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M11.051 7.616a1 1 0 0 1 1.909.024l.737 1.452a1 1 0 0 0 .737.535l1.634.256a1 1 0 0 1 .588 1.806l-1.172 1.168a1 1 0 0 0-.282.866l.259 1.613a1 1 0 0 1-1.541 1.134l-1.465-.75a1 1 0 0 0-.912 0l-1.465.75a1 1 0 0 1-1.539-1.133l.258-1.613a1 1 0 0 0-.282-.867l-1.156-1.152a1 1 0 0 1 .572-1.822l1.633-.256a1 1 0 0 0 .737-.535z"/></svg></span>';
+
+function readDiscordSession() {
+  try {
+    return JSON.parse(localStorage.getItem("oneDiscordSession") || "null");
+  } catch {
+    localStorage.removeItem("oneDiscordSession");
+    return null;
+  }
+}
+
+function getDiscordRedirectUri() {
+  return `${window.location.origin}${window.location.pathname}`;
+}
+
+function getDiscordAvatarUrl(user) {
+  if (!user?.id || !user.avatar) return "";
+  const extension = user.avatar.startsWith("a_") ? "gif" : "png";
+  return `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.${extension}?size=128`;
+}
+
+function normalizeDiscordUser(user) {
+  const displayName = user.global_name || user.username || "Kawanone";
+  return {
+    id: user.id,
+    name: displayName,
+    username: user.username,
+    avatarUrl: getDiscordAvatarUrl(user),
+    avatarInitial: displayName.slice(0, 1).toUpperCase(),
+  };
+}
 
 const categoryMeta = {
   games: {
@@ -255,20 +290,77 @@ function syncAuthState() {
     element.textContent = discordUser.name;
   });
   if (profileAvatar) profileAvatar.textContent = discordUser.avatarInitial;
+  document.querySelectorAll(".avatar-mini, .profile-avatar").forEach((element) => {
+    element.style.backgroundImage = discordUser.avatarUrl ? `url("${discordUser.avatarUrl}")` : "";
+    element.classList.toggle("has-discord-avatar", Boolean(discordUser.avatarUrl));
+  });
 }
 
-function loginWithDiscord() {
+async function loginWithDiscord() {
+  if (!DISCORD_CLIENT_ID || DISCORD_CLIENT_ID === "COLOQUE_SEU_CLIENT_ID_AQUI") {
+    showToast("Configure o Client ID do Discord no script.js.");
+    return;
+  }
+
+  const state = crypto.randomUUID();
+  localStorage.setItem("oneDiscordOAuthState", state);
+  const params = new URLSearchParams({
+    client_id: DISCORD_CLIENT_ID,
+    redirect_uri: getDiscordRedirectUri(),
+    response_type: "token",
+    scope: "identify",
+    state,
+    prompt: "none",
+  });
+  window.location.href = `${DISCORD_API}/oauth2/authorize?${params.toString()}`;
+}
+
+async function finishDiscordLoginFromCallback() {
+  const params = new URLSearchParams(window.location.hash.slice(1));
+  const accessToken = params.get("access_token");
+  if (!accessToken) return false;
+
+  const expectedState = localStorage.getItem("oneDiscordOAuthState");
+  if (expectedState && params.get("state") !== expectedState) {
+    localStorage.removeItem("oneDiscordOAuthState");
+    showToast("Login Discord recusado por seguranca.");
+    return false;
+  }
+
+  localStorage.removeItem("oneDiscordOAuthState");
+  const response = await fetch(`${DISCORD_API}/users/@me`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+
+  if (!response.ok) {
+    showToast("Nao foi possivel validar o Discord.");
+    return false;
+  }
+
+  discordUser = normalizeDiscordUser(await response.json());
+  discordSession = {
+    accessToken,
+    user: discordUser,
+    createdAt: Date.now(),
+  };
   isLoggedIn = true;
-  localStorage.setItem("oneDiscordSession", "connected");
+  localStorage.setItem("oneDiscordSession", JSON.stringify(discordSession));
   syncAuthState();
   window.location.hash = "home";
   showToast("Bem-vindo ao ONE HUB.");
   showPage();
+  return true;
 }
 
 function logoutDiscord() {
   isLoggedIn = false;
+  discordSession = null;
+  discordUser = {
+    name: "Kawanone",
+    avatarInitial: "K",
+  };
   localStorage.removeItem("oneDiscordSession");
+  localStorage.removeItem("oneDiscordOAuthState");
   syncAuthState();
   window.location.hash = "login";
   showToast("Conta Discord desconectada.");
@@ -414,6 +506,8 @@ function addCoins(amount, message) {
 
 function renderShop() {
   shopGrid.innerHTML = "";
+  testModeToggle.classList.toggle("active", testModeFree);
+  testModeToggle.textContent = testModeFree ? "Teste grátis" : "Modo teste";
 
   shopFilterButtons.forEach((button) => {
     button.classList.toggle("active", button.dataset.shopFilter === activeShopFilter);
@@ -454,7 +548,7 @@ function renderShop() {
         <p>${item.desc}</p>
       </div>
       <button type="button" class="${isOwned ? "owned" : ""}">
-        ${isEquipped ? "Equipado" : isOwned ? "Equipar" : `${formatCoins(item.price)} ${coinIconSvg}`}
+        ${isEquipped ? "Equipado" : isOwned ? "Equipar" : testModeFree ? "Grátis" : `${formatCoins(item.price)} ${coinIconSvg}`}
       </button>
     `;
 
@@ -464,12 +558,12 @@ function renderShop() {
         return;
       }
 
-      if (coins < item.price) {
+      if (!testModeFree && coins < item.price) {
         showToast("ONE COIN insuficiente. Jogue para ganhar mais moedas.");
         return;
       }
 
-      coins -= item.price;
+      if (!testModeFree) coins -= item.price;
       owned.push(item);
       updateBalances();
       renderShop();
@@ -740,6 +834,12 @@ shopFilterButtons.forEach((button) => {
   });
 });
 
+testModeToggle.addEventListener("click", () => {
+  testModeFree = !testModeFree;
+  renderShop();
+  showToast(testModeFree ? "Modo teste ativado: shop gratuito." : "Modo teste desativado.");
+});
+
 backToGames.addEventListener("click", showGamesMenu);
 spinRoulette.addEventListener("click", spinCasinoRoulette);
 discordLogin.addEventListener("click", loginWithDiscord);
@@ -752,17 +852,30 @@ themeToggle.addEventListener("click", () => {
   showToast(isDark ? "Modo escuro ativado para teste." : "Modo claro ativado para teste.");
 });
 
-window.addEventListener("hashchange", showPage);
-updateBalances();
-renderHubCards();
-renderGameBanners();
-renderShop();
-renderInventory();
-renderRouletteHistory();
-renderRouletteCarousel();
-bindSettingsForms();
-bindGameConfigForms();
-syncSettingsForms();
-syncGameConfigForms();
-showPage();
+window.addEventListener("hashchange", () => {
+  if (window.location.hash.includes("access_token=")) {
+    finishDiscordLoginFromCallback();
+    return;
+  }
+  showPage();
+});
+
+async function initApp() {
+  updateBalances();
+  renderHubCards();
+  renderGameBanners();
+  renderShop();
+  renderInventory();
+  renderRouletteHistory();
+  renderRouletteCarousel();
+  bindSettingsForms();
+  bindGameConfigForms();
+  syncSettingsForms();
+  syncGameConfigForms();
+
+  if (await finishDiscordLoginFromCallback()) return;
+  showPage();
+}
+
+initApp();
 
