@@ -16,6 +16,8 @@ const equipped = {
 const pages = Array.from(document.querySelectorAll(".page"));
 const navLinks = Array.from(document.querySelectorAll(".nav a"));
 const shopFilterButtons = Array.from(document.querySelectorAll("[data-shop-filter]"));
+const frameSubfilters = document.querySelector(".frame-subfilters");
+const themeSubfilters = document.querySelector(".theme-subfilters");
 const toast = document.querySelector("#toast");
 const hubCards = document.querySelector("#hubCards");
 const shopGrid = document.querySelector("#shopGrid");
@@ -23,6 +25,8 @@ const inventoryList = document.querySelector("#inventoryList");
 const inventoryCount = document.querySelector("#inventoryCount");
 const inventoryBadge = document.querySelector("#inventoryBadge");
 const profileAvatar = document.querySelector("#profileAvatar");
+const profileAvatarWrap = document.querySelector(".profile-avatar-wrap");
+const avatarMini = document.querySelector(".avatar-mini");
 const profileTitle = document.querySelector("#profileTitle");
 const equippedFrame = document.querySelector("#equippedFrame");
 const equippedTheme = document.querySelector("#equippedTheme");
@@ -55,6 +59,8 @@ let temporaryMultiplier = 1;
 let multiplierSpinsLeft = 0;
 let paymentMode = "coins";
 let activeShopFilter = "all";
+const frameRarities = ["common", "rare", "epic", "legendary", "ultra"];
+const themeRarities = ["theme-common", "theme-rare", "theme-epic", "theme-legendary", "theme-ultra"];
 const rouletteResults = [];
 const carouselPrizeWidth = 146;
 const carouselRounds = 4;
@@ -107,23 +113,51 @@ const gameConfig = {
 const shopItems = [
   {
     id: "frame-neon",
-    name: "Borda Neon ONE",
-    desc: "Contorno azul com presenca de arcade no perfil.",
+    name: "Angel White",
+    desc: "Uma moldura angelical em branco prateado, feita para iluminar o perfil com leveza e protecao.",
     price: 420,
     type: "frame",
-    typeLabel: "Borda",
-    effect: "neon",
-    image: "neon-frame",
+    typeLabel: "Comum",
+    rarity: "common",
+    effect: "common-frame-equipped",
+    image: "common-frame",
+    imageUrl: "https://r2.fivemanage.com/vLUsF9vzqBOo7DSFHERFX/imagem_2026-06-03_213603907-removebg-preview.png",
   },
   {
     id: "frame-gold",
-    name: "Borda Jackpot",
-    desc: "Acabamento dourado para vencedores raros.",
+    name: "Angel Gold",
+    desc: "Uma moldura angelical dourada, criada para destacar o perfil com brilho sagrado e presenca lendaria.",
     price: 680,
     type: "frame",
-    typeLabel: "Borda",
-    effect: "solar",
+    typeLabel: "Lendário",
+    rarity: "legendary",
+    effect: "legendary-frame-equipped",
     image: "gold-frame",
+    imageUrl: "https://r2.fivemanage.com/vLUsF9vzqBOo7DSFHERFX/-removebg-preview.png",
+  },
+  {
+    id: "frame-safirium",
+    name: "Safirium",
+    desc: "Uma moldura ultra rara lapidada em tons de safira, feita para envolver o perfil com brilho cristalino e energia celestial.",
+    price: 1400,
+    type: "frame",
+    typeLabel: "Ultra",
+    rarity: "ultra",
+    effect: "safirium-frame-equipped",
+    image: "safirium-frame",
+    imageUrl: "https://r2.fivemanage.com/vLUsF9vzqBOo7DSFHERFX/download__36_-removebg-preview(1).png",
+  },
+  {
+    id: "frame-rubi-prism",
+    name: "Rubi Prism",
+    desc: "Uma moldura lendaria com brilho rubi prismático, criada para destacar o perfil com intensidade, luxo e poder celestial.",
+    price: 1100,
+    type: "frame",
+    typeLabel: "Lendário",
+    rarity: "legendary",
+    effect: "rubi-prism-frame-equipped",
+    image: "rubi-prism-frame",
+    imageUrl: "https://r2.fivemanage.com/vLUsF9vzqBOo7DSFHERFX/download__38_-removebg-preview.png",
   },
   {
     id: "theme-blueprint",
@@ -131,7 +165,8 @@ const shopItems = [
     desc: "Fundo frio com linhas luminosas no card do perfil.",
     price: 520,
     type: "theme",
-    typeLabel: "Tema",
+    typeLabel: "Comum",
+    rarity: "theme-common",
     effect: "blueprint",
     image: "theme-blueprint",
   },
@@ -141,9 +176,22 @@ const shopItems = [
     desc: "Visual escuro premium sincronizado com seu perfil.",
     price: 760,
     type: "theme",
-    typeLabel: "Tema",
+    typeLabel: "Raro",
+    rarity: "theme-rare",
     effect: "midnight",
     image: "theme-midnight",
+  },
+  {
+    id: "theme-hello-kit",
+    name: "Hello Kit",
+    desc: "Tema ultra em rosa doce e brilhante, criado para transformar todo o HUB com uma paleta delicada, charmosa e premium.",
+    price: 1600,
+    type: "theme",
+    typeLabel: "Ultra",
+    rarity: "theme-ultra",
+    effect: "hello-kit",
+    image: "theme-hello-kit",
+    appliesGlobalPalette: true,
   },
   {
     id: "title-pro",
@@ -370,10 +418,16 @@ function renderShop() {
   shopFilterButtons.forEach((button) => {
     button.classList.toggle("active", button.dataset.shopFilter === activeShopFilter);
   });
+  const isFrameFilterOpen = activeShopFilter === "frame" || frameRarities.includes(activeShopFilter);
+  const isThemeFilterOpen = activeShopFilter === "theme" || themeRarities.includes(activeShopFilter);
+  frameSubfilters.classList.toggle("hidden", !isFrameFilterOpen);
+  themeSubfilters.classList.toggle("hidden", !isThemeFilterOpen);
+  document.querySelector("[data-frame-toggle]").classList.toggle("expanded", isFrameFilterOpen);
+  document.querySelector("[data-theme-toggle]").classList.toggle("expanded", isThemeFilterOpen);
 
   const visibleItems = shopItems.filter((item) => {
     const isOwned = owned.some((ownedItem) => ownedItem.id === item.id);
-    return activeShopFilter === "all" || item.type === activeShopFilter || (activeShopFilter === "owned" && isOwned);
+    return activeShopFilter === "all" || item.type === activeShopFilter || item.rarity === activeShopFilter || (activeShopFilter === "owned" && isOwned);
   });
 
   if (!visibleItems.length) {
@@ -391,7 +445,8 @@ function renderShop() {
     card.className = "shop-item";
     card.innerHTML = `
       <div class="shop-art ${item.image}">
-        <span>${item.typeLabel}</span>
+        ${item.imageUrl ? `<img src="${item.imageUrl}" alt="" />` : ""}
+        ${item.imageUrl ? "" : `<span>${item.typeLabel}</span>`}
       </div>
       <div>
         <span class="shop-type">${item.typeLabel}</span>
@@ -458,11 +513,22 @@ function equipItem(item) {
 
 function applyProfileEquipment() {
   const profileCard = document.querySelector(".profile-showcase");
-  profileAvatar.classList.remove("neon", "solar", "rift");
-  profileCard.classList.remove("theme-blueprint", "theme-midnight");
+  const frameClasses = ["common-frame-equipped", "legendary-frame-equipped", "safirium-frame-equipped", "rubi-prism-frame-equipped", "neon", "solar", "rift"];
+  profileAvatar.classList.remove(...frameClasses);
+  profileAvatarWrap.classList.remove(...frameClasses);
+  avatarMini.classList.remove(...frameClasses);
+  profileCard.classList.remove("theme-blueprint", "theme-midnight", "theme-hello-kit");
+  document.body.classList.remove("hub-theme-hello-kit");
 
-  if (equipped.frame) profileAvatar.classList.add(equipped.frame.effect);
-  if (equipped.theme) profileCard.classList.add(`theme-${equipped.theme.effect}`);
+  if (equipped.frame) {
+    profileAvatar.classList.add(equipped.frame.effect);
+    profileAvatarWrap.classList.add(equipped.frame.effect);
+    avatarMini.classList.add(equipped.frame.effect);
+  }
+  if (equipped.theme) {
+    profileCard.classList.add(`theme-${equipped.theme.effect}`);
+    if (equipped.theme.appliesGlobalPalette) document.body.classList.add(`hub-theme-${equipped.theme.effect}`);
+  }
   profileTitle.textContent = equipped.title?.effect || "Novato";
   if (equippedFrame) equippedFrame.textContent = equipped.frame?.name || "Nenhuma";
   if (equippedTheme) equippedTheme.textContent = equipped.theme?.name || "Nenhum";
@@ -663,7 +729,13 @@ document.querySelectorAll("[data-payment]").forEach((button) => {
 
 shopFilterButtons.forEach((button) => {
   button.addEventListener("click", () => {
-    activeShopFilter = button.dataset.shopFilter;
+    if (button.dataset.shopFilter === "frame" && (activeShopFilter === "frame" || frameRarities.includes(activeShopFilter))) {
+      activeShopFilter = "all";
+    } else if (button.dataset.shopFilter === "theme" && (activeShopFilter === "theme" || themeRarities.includes(activeShopFilter))) {
+      activeShopFilter = "all";
+    } else {
+      activeShopFilter = button.dataset.shopFilter;
+    }
     renderShop();
   });
 });

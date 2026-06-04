@@ -191,10 +191,31 @@
 
         <div class="filters" aria-label="Filtros da loja">
           <button class="active" data-shop-filter="all" type="button">Todos os itens</button>
-          <button data-shop-filter="frame" type="button">Bordas</button>
-          <button data-shop-filter="theme" type="button">Temas</button>
+          <button data-shop-filter="fivem" type="button">Fivem</button>
+          <button class="filter-with-arrow" data-shop-filter="frame" data-frame-toggle type="button">
+            Molduras
+            <span aria-hidden="true"></span>
+          </button>
+          <button class="filter-with-arrow" data-shop-filter="theme" data-theme-toggle type="button">
+            Temas
+            <span aria-hidden="true"></span>
+          </button>
           <button data-shop-filter="title" type="button">Titulos</button>
           <button data-shop-filter="owned" type="button">Comprados</button>
+        </div>
+        <div class="filters subfilters frame-subfilters hidden" aria-label="Raridade das molduras">
+          <button data-shop-filter="common" type="button">Comum</button>
+          <button data-shop-filter="rare" type="button">Raro</button>
+          <button data-shop-filter="epic" type="button">Épico</button>
+          <button data-shop-filter="legendary" type="button">Lendário</button>
+          <button data-shop-filter="ultra" type="button">Ultra</button>
+        </div>
+        <div class="filters subfilters theme-subfilters hidden" aria-label="Raridade dos temas">
+          <button data-shop-filter="theme-common" type="button">Comum</button>
+          <button data-shop-filter="theme-rare" type="button">Raro</button>
+          <button data-shop-filter="theme-epic" type="button">Épico</button>
+          <button data-shop-filter="theme-legendary" type="button">Lendário</button>
+          <button data-shop-filter="theme-ultra" type="button">Ultra</button>
         </div>
 
         <div id="shopGrid" class="shop-grid"></div>
