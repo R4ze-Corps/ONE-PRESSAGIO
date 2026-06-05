@@ -7,11 +7,14 @@ let coins = 1250;
 let testModeFree = false;
 const DISCORD_CLIENT_ID = "1507207436665229322";
 const DISCORD_API = "https://discord.com/api";
+const DISCORD_GUILD_ID = "COLOQUE_O_ID_DO_SERVIDOR";
+const ADMIN_ROLE_ID = "1503079573124943924";
 let discordSession = readDiscordSession();
 let isLoggedIn = Boolean(discordSession?.accessToken);
 let discordUser = discordSession?.user || {
   name: "ONE HUB",
   avatarInitial: "O",
+  roles: [],
 };
 const owned = [];
 const equipped = {
@@ -155,7 +158,37 @@ function normalizeDiscordUser(user) {
     username: user.username,
     avatarUrl: getDiscordAvatarUrl(user),
     avatarInitial: displayName.slice(0, 1).toUpperCase(),
+    roles: [],
   };
+}
+
+function hasAdminRole() {
+  return discordUser.roles?.includes(ADMIN_ROLE_ID);
+}
+
+async function fetchDiscordRoles(accessToken) {
+  if (
+    !DISCORD_GUILD_ID ||
+    DISCORD_GUILD_ID === "COLOQUE_O_ID_DO_SERVIDOR"
+  ) {
+    console.warn("Configure DISCORD_GUILD_ID para validar cargos do Discord.");
+    return [];
+  }
+
+  const response = await fetch(
+    `${DISCORD_API}/users/@me/guilds/${DISCORD_GUILD_ID}/member`,
+    {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    },
+  );
+
+  if (!response.ok) {
+    console.warn("Nao foi possivel carregar cargos do Discord.");
+    return [];
+  }
+
+  const member = await response.json();
+  return Array.isArray(member.roles) ? member.roles : [];
 }
 
 const categoryMeta = {
@@ -341,7 +374,15 @@ function showPage() {
     return;
   }
 
-  const unlockedRequest = requested === "login" ? "home" : requested;
+  if (requested === "settings" && !hasAdminRole()) {
+    window.history.replaceState(null, "", "#home");
+    showToast("Ajustes liberado apenas para cargo autorizado.");
+  }
+
+  const unlockedRequest =
+    requested === "login" || (requested === "settings" && !hasAdminRole())
+      ? "home"
+      : requested;
   const activeId = pages.some(
     (page) => page.id === unlockedRequest && page.id !== "login",
   )
@@ -374,6 +415,7 @@ function showPage() {
 
 function syncAuthState() {
   document.body.classList.toggle("auth-locked", !isLoggedIn);
+  document.body.classList.toggle("has-admin-role", isLoggedIn && hasAdminRole());
   document.querySelectorAll("[data-user-name]").forEach((element) => {
     element.textContent = discordUser.name;
   });
@@ -406,7 +448,7 @@ async function loginWithDiscord() {
     client_id: DISCORD_CLIENT_ID,
     redirect_uri: getDiscordRedirectUri(),
     response_type: "token",
-    scope: "identify",
+    scope: "identify guilds.members.read",
     state,
     prompt: "none",
   });
@@ -420,6 +462,7 @@ function loginWithTestUser() {
     username: "onehub",
     avatarInitial: "O",
     avatarUrl: "",
+    roles: [ADMIN_ROLE_ID],
   };
   discordSession = {
     accessToken: "test-session",
@@ -458,6 +501,7 @@ async function finishDiscordLoginFromCallback() {
   }
 
   discordUser = normalizeDiscordUser(await response.json());
+  discordUser.roles = await fetchDiscordRoles(accessToken);
   discordSession = {
     accessToken,
     user: discordUser,
@@ -472,12 +516,26 @@ async function finishDiscordLoginFromCallback() {
   return true;
 }
 
+async function refreshSavedDiscordRoles() {
+  if (!isLoggedIn || discordSession?.test || !discordSession?.accessToken) {
+    return;
+  }
+  if (Array.isArray(discordUser.roles) && discordUser.roles.length) {
+    return;
+  }
+
+  discordUser.roles = await fetchDiscordRoles(discordSession.accessToken);
+  discordSession.user = discordUser;
+  localStorage.setItem("oneDiscordSession", JSON.stringify(discordSession));
+}
+
 function logoutDiscord() {
   isLoggedIn = false;
   discordSession = null;
   discordUser = {
     name: "Kawanone",
     avatarInitial: "K",
+    roles: [],
   };
   localStorage.removeItem("oneDiscordSession");
   localStorage.removeItem("oneDiscordOAuthState");
@@ -1397,6 +1455,7 @@ async function initApp() {
   syncEventConfigForm();
 
   if (await finishDiscordLoginFromCallback()) return;
+  await refreshSavedDiscordRoles();
   showPage();
 }
 

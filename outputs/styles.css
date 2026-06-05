@@ -181,6 +181,11 @@ body.auth-locked .topbar {
   display: none;
 }
 
+body:not(.has-admin-role) .admin-only,
+body:not(.has-admin-role) .test-login {
+  display: none;
+}
+
 body.auth-locked main {
   display: grid;
   min-height: 100vh;
