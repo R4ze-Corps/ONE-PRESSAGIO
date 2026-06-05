@@ -1438,23 +1438,6 @@ h1 {
   font-size: 1.2rem;
 }
 
-.test-mode-toggle {
-  margin-top: 8px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  padding: 7px 11px;
-  color: var(--muted);
-  background: var(--bg);
-  font-size: 0.76rem;
-  font-weight: 700;
-}
-
-.test-mode-toggle.active {
-  border-color: var(--accent);
-  color: #fff;
-  background: var(--accent);
-}
-
 .filters {
   display: flex;
   gap: 8px;
@@ -2067,18 +2050,82 @@ h1 {
   font-weight: 700;
 }
 
-.settings-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+.settings-shell {
+  display: grid;
+  grid-template-columns: minmax(210px, 250px) minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.settings-sidebar {
+  position: sticky;
+  top: 88px;
+  display: grid;
+  gap: 18px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 14px;
+  background: var(--panel);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+}
+
+.settings-menu-group {
+  display: grid;
+  gap: 7px;
+}
+
+.settings-menu-group strong {
+  padding: 0 8px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+}
+
+.settings-menu-group button,
+.settings-sidebar-tools button {
+  min-height: 38px;
+  border-radius: 12px;
+  padding: 0 12px;
+  color: var(--muted);
+  background: transparent;
+  text-align: left;
+  font-weight: 650;
+}
+
+.settings-menu-group button:hover,
+.settings-menu-group button.active {
+  color: #fff;
+  background: var(--accent);
+}
+
+.settings-sidebar-tools {
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
+.settings-sidebar-tools button {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: var(--panel-soft);
+  text-align: center;
+}
+
+.settings-content {
+  min-width: 0;
+}
+
+.settings-section {
+  display: none;
+}
+
+.settings-section.active {
+  display: block;
 }
 
 .settings-panel {
   display: grid;
   gap: 20px;
   padding: 24px;
-}
-
-.settings-panel.wide {
-  grid-column: 1 / -1;
 }
 
 .settings-panel h2 {
@@ -2094,6 +2141,7 @@ h1 {
 
 .hub-config,
 .game-config,
+.game-status-config,
 .event-config,
 .product-config {
   display: grid;
@@ -2102,6 +2150,7 @@ h1 {
 
 .hub-config label,
 .game-config label,
+.game-status-config label,
 .event-config label,
 .product-config label {
   display: grid;
@@ -2117,6 +2166,9 @@ h1 {
 .game-config input,
 .game-config select,
 .game-config textarea,
+.game-status-config input,
+.game-status-config select,
+.game-status-config textarea,
 .event-config input,
 .event-config select,
 .event-config textarea,
@@ -2135,6 +2187,7 @@ h1 {
 
 .hub-config textarea,
 .game-config textarea,
+.game-status-config textarea,
 .event-config textarea,
 .product-config textarea {
   resize: vertical;
@@ -2146,6 +2199,9 @@ h1 {
 .game-config input:focus,
 .game-config select:focus,
 .game-config textarea:focus,
+.game-status-config input:focus,
+.game-status-config select:focus,
+.game-status-config textarea:focus,
 .event-config input:focus,
 .event-config select:focus,
 .event-config textarea:focus,
@@ -2165,6 +2221,20 @@ h1 {
 .settings-submit {
   justify-self: start;
   min-width: 180px;
+}
+
+.settings-placeholder {
+  display: grid;
+  gap: 8px;
+  border: 1px dashed var(--line);
+  border-radius: 16px;
+  padding: 18px;
+  color: var(--muted);
+  background: var(--panel-soft);
+}
+
+.settings-placeholder strong {
+  color: var(--text);
 }
 
 .inventory-panel {
@@ -2485,9 +2555,21 @@ body.dark-mode .carousel-prize.jackpot {
   .profile-showcase,
   .profile-stats,
   .equipped-grid,
-  .settings-grid,
+  .settings-shell,
   .event-card {
     grid-template-columns: 1fr;
+  }
+
+  .settings-sidebar {
+    position: static;
+  }
+
+  .settings-menu-group {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .settings-menu-group strong {
+    grid-column: 1 / -1;
   }
 
   .event-mark,

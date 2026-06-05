@@ -55,12 +55,12 @@ async function getDb() {
 
 async function readDataFile() {
   if (!existsSync(dataFile)) {
-    return { shop_products: [], events: [] };
+    return { shop_products: [], events: [], event_participants: [] };
   }
   const content = await fs.readFile(dataFile, "utf8");
   return content.trim()
     ? JSON.parse(content)
-    : { shop_products: [], events: [] };
+    : { shop_products: [], events: [], event_participants: [] };
 }
 
 async function writeDataFile(data) {
@@ -115,6 +115,20 @@ function normalizeEvent(event) {
     reward: event.reward || "",
     status: event.status || "active",
     createdAt: event.createdAt,
+  };
+}
+
+function normalizeParticipant(participant) {
+  return {
+    id: (participant._id || participant.id).toString(),
+    eventId: participant.eventId,
+    eventTitle: participant.eventTitle,
+    userId: participant.userId,
+    username: participant.username,
+    status: participant.status,
+    joinedAt: participant.joinedAt,
+    leftAt: participant.leftAt || null,
+    updatedAt: participant.updatedAt,
   };
 }
 
@@ -217,6 +231,63 @@ async function handleApi(request, response, pathname) {
       }
       const result = await db.collection("events").insertOne(event);
       sendJson(response, 201, normalizeEvent({ ...event, _id: result.insertedId }));
+      return true;
+    }
+
+    if (pathname === "/api/event-participants" && request.method === "POST") {
+      const body = await readJson(request);
+      const now = new Date();
+      const eventId = body.eventId || body.eventTitle || "evento-atual";
+      const userId = body.userId || "anonymous";
+      const joined = Boolean(body.joined);
+
+      if (!db) {
+        const data = await readDataFile();
+        if (!Array.isArray(data.event_participants))
+          data.event_participants = [];
+        const existing = data.event_participants.find(
+          (participant) =>
+            participant.eventId === eventId && participant.userId === userId,
+        );
+        const participant = {
+          ...(existing || { id: createLocalId(), joinedAt: now }),
+          eventId,
+          eventTitle: body.eventTitle || "",
+          userId,
+          username: body.username || "ONE HUB",
+          avatarUrl: body.avatarUrl || "",
+          status: joined ? "joined" : "left",
+          leftAt: joined ? null : now,
+          updatedAt: now,
+        };
+        if (existing) {
+          Object.assign(existing, participant);
+        } else {
+          data.event_participants.unshift(participant);
+        }
+        await writeDataFile(data);
+        sendJson(response, 200, normalizeParticipant(participant));
+        return true;
+      }
+
+      const result = await db.collection("event_participants").findOneAndUpdate(
+        { eventId, userId },
+        {
+          $set: {
+            eventId,
+            eventTitle: body.eventTitle || "",
+            userId,
+            username: body.username || "ONE HUB",
+            avatarUrl: body.avatarUrl || "",
+            status: joined ? "joined" : "left",
+            updatedAt: now,
+            ...(joined ? { leftAt: null } : { leftAt: now }),
+          },
+          $setOnInsert: { joinedAt: now },
+        },
+        { upsert: true, returnDocument: "after" },
+      );
+      sendJson(response, 200, normalizeParticipant(result));
       return true;
     }
 

@@ -4,7 +4,6 @@ const API_BASE =
   window.location.protocol === "file:" ? "http://127.0.0.1:3000" : "";
 
 let coins = 1250;
-let testModeFree = false;
 const DISCORD_CLIENT_ID = "1507207436665229322";
 const DISCORD_API = "https://discord.com/api";
 const DISCORD_GUILD_ID = "1500607972605296713";
@@ -28,6 +27,12 @@ const navLinks = Array.from(document.querySelectorAll(".nav a"));
 const shopFilterButtons = Array.from(
   document.querySelectorAll("[data-shop-filter]"),
 );
+const settingsTabButtons = Array.from(
+  document.querySelectorAll("[data-settings-tab]"),
+);
+const settingsSections = Array.from(
+  document.querySelectorAll("[data-settings-section]"),
+);
 const frameSubfilters = document.querySelector(".frame-subfilters");
 const themeSubfilters = document.querySelector(".theme-subfilters");
 const toast = document.querySelector("#toast");
@@ -46,7 +51,6 @@ const equippedTitle = document.querySelector("#equippedTitle");
 const discordLogin = document.querySelector("#discordLogin");
 const discordLogout = document.querySelector("#discordLogout");
 const testLogin = document.querySelector("#testLogin");
-const testModeToggle = document.querySelector("#testModeToggle");
 const themeToggle = document.querySelector("#themeToggle");
 const rouletteWheel = document.querySelector("#rouletteWheel");
 const spinRoulette = document.querySelector("#spinRoulette");
@@ -237,6 +241,7 @@ const gameConfig = {
 };
 
 const eventConfig = {
+  id: "barata-x-humanos",
   title: "BARATA X HUMANOS",
   mainDescription: "Preparem-se para uma guerra caótica dentro do labirinto!",
   bannerUrl:
@@ -407,6 +412,7 @@ function showPage() {
   if (activeId === "settings") {
     syncSettingsForms();
     syncGameConfigForms();
+    syncEventConfigForm();
   }
   if (activeId === "games") showGamesMenu();
   window.scrollTo({ top: 0, behavior: "instant" });
@@ -616,6 +622,18 @@ function bindSettingsForms() {
   });
 }
 
+function showSettingsTab(tabId) {
+  settingsTabButtons.forEach((button) => {
+    button.classList.toggle("active", button.dataset.settingsTab === tabId);
+  });
+  settingsSections.forEach((section) => {
+    section.classList.toggle(
+      "active",
+      section.dataset.settingsSection === tabId,
+    );
+  });
+}
+
 function renderGameBanners() {
   const roulette = gameConfig.roulette;
   rouletteBannerStatus.textContent = roulette.status;
@@ -641,9 +659,13 @@ rouletteBannerImage.addEventListener("error", () => {
 });
 
 function syncGameConfigForms() {
-  document.querySelectorAll(".game-config").forEach((form) => {
+  document.querySelectorAll(".game-status-config").forEach((form) => {
     const config = gameConfig[form.dataset.game];
     form.querySelector('[name="status"]').value = config.status;
+  });
+
+  document.querySelectorAll(".game-config").forEach((form) => {
+    const config = gameConfig[form.dataset.game];
     form.querySelector('[name="title"]').value = config.title;
     form.querySelector('[name="description"]').value = config.description;
     form.querySelector('[name="imageUrl"]').value = config.imageUrl;
@@ -651,10 +673,20 @@ function syncGameConfigForms() {
 }
 
 function bindGameConfigForms() {
-  document.querySelectorAll(".game-config").forEach((form) => {
+  document.querySelectorAll(".game-status-config").forEach((form) => {
     const readForm = () => {
       const config = gameConfig[form.dataset.game];
       config.status = form.querySelector('[name="status"]').value;
+      renderGameBanners();
+    };
+
+    form.addEventListener("input", readForm);
+    form.addEventListener("change", readForm);
+  });
+
+  document.querySelectorAll(".game-config").forEach((form) => {
+    const readForm = () => {
+      const config = gameConfig[form.dataset.game];
       config.title =
         form.querySelector('[name="title"]').value.trim() || "Roleta ONE";
       config.description =
@@ -731,6 +763,7 @@ function renderEventContent() {
 
 function applyApiEvent(event) {
   if (!event) return;
+  eventConfig.id = event.id || eventConfig.id;
   eventConfig.title = event.title || eventConfig.title;
   eventConfig.mainDescription =
     event.mainDescription || eventConfig.mainDescription;
@@ -767,7 +800,9 @@ async function saveEventToApi() {
     }),
   });
   if (!response.ok) throw new Error("Nao foi possivel salvar o evento");
-  return response.json();
+  const event = await response.json();
+  applyApiEvent(event);
+  return event;
 }
 
 function syncEventConfigForm() {
@@ -984,8 +1019,6 @@ function addCoins(amount, message) {
 
 function renderShop() {
   shopGrid.innerHTML = "";
-  testModeToggle.classList.toggle("active", testModeFree);
-  testModeToggle.textContent = testModeFree ? "Teste grátis" : "Modo teste";
 
   shopFilterButtons.forEach((button) => {
     button.classList.toggle(
@@ -1044,7 +1077,7 @@ function renderShop() {
         ${item.quantity ? `<small class="shop-stock">Quantidade: ${formatCoins(item.quantity)}</small>` : ""}
       </div>
       <button type="button" class="${isOwned ? "owned" : ""}">
-        ${isEquipped ? "Equipado" : isOwned ? "Equipar" : testModeFree ? "Grátis" : `${formatCoins(item.price)} ${coinIconSvg}`}
+        ${isEquipped ? "Equipado" : isOwned ? "Equipar" : `${formatCoins(item.price)} ${coinIconSvg}`}
       </button>
     `;
 
@@ -1054,12 +1087,12 @@ function renderShop() {
         return;
       }
 
-      if (!testModeFree && coins < item.price) {
+      if (coins < item.price) {
         showToast("ONE COIN insuficiente. Jogue para ganhar mais moedas.");
         return;
       }
 
-      if (!testModeFree) coins -= item.price;
+      coins -= item.price;
       owned.push(item);
       updateBalances();
       renderShop();
@@ -1153,12 +1186,40 @@ function updateEventButtons() {
   });
 }
 
-function toggleEventJoin() {
-  eventJoined = !eventJoined;
+async function saveEventParticipation(joined) {
+  const response = await fetch(`${API_BASE}/api/event-participants`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      eventId: eventConfig.id || eventConfig.title,
+      eventTitle: eventConfig.title,
+      userId: discordUser.id || discordUser.username || "anonymous",
+      username: discordUser.name || "ONE HUB",
+      avatarUrl: discordUser.avatarUrl || "",
+      joined,
+    }),
+  });
+  if (!response.ok) throw new Error("Nao foi possivel salvar participacao");
+  return response.json();
+}
+
+async function toggleEventJoin() {
+  const nextState = !eventJoined;
+  eventJoined = nextState;
   updateEventButtons();
-  showToast(
-    eventJoined ? "Voce esta participando do evento." : "Voce saiu do evento.",
-  );
+  try {
+    await saveEventParticipation(nextState);
+    showToast(
+      nextState
+        ? "Voce esta participando do evento."
+        : "Voce saiu do evento.",
+    );
+  } catch (error) {
+    eventJoined = !nextState;
+    updateEventButtons();
+    console.warn("API event-participants:", error.message);
+    showToast("Nao foi possivel salvar sua participacao.");
+  }
 }
 
 eventCard.addEventListener("click", () => {
@@ -1404,14 +1465,10 @@ shopFilterButtons.forEach((button) => {
   });
 });
 
-testModeToggle.addEventListener("click", () => {
-  testModeFree = !testModeFree;
-  renderShop();
-  showToast(
-    testModeFree
-      ? "Modo teste ativado: shop gratuito."
-      : "Modo teste desativado.",
-  );
+settingsTabButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    showSettingsTab(button.dataset.settingsTab);
+  });
 });
 
 backToGames.addEventListener("click", showGamesMenu);

@@ -251,7 +251,6 @@
           <div class="balance-chip">
             <span>Seu saldo</span>
             <strong><span id="shopBalance">1.250</span> <span class="coin-inline" aria-label="ONE COIN"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M11.051 7.616a1 1 0 0 1 1.909.024l.737 1.452a1 1 0 0 0 .737.535l1.634.256a1 1 0 0 1 .588 1.806l-1.172 1.168a1 1 0 0 0-.282.866l.259 1.613a1 1 0 0 1-1.541 1.134l-1.465-.75a1 1 0 0 0-.912 0l-1.465.75a1 1 0 0 1-1.539-1.133l.258-1.613a1 1 0 0 0-.282-.867l-1.156-1.152a1 1 0 0 1 .572-1.822l1.633-.256a1 1 0 0 0 .737-.535z" /></svg></span></strong>
-            <button id="testModeToggle" class="test-mode-toggle" type="button">Modo teste</button>
           </div>
         </div>
 
@@ -368,185 +367,252 @@
           <p>Escolha quais cards aparecem na pagina inicial como Destaque e Ao vivo.</p>
         </div>
 
-        <div class="settings-grid">
-          <article class="settings-panel">
-            <div class="settings-copy">
-              <h2>Card destaque</h2>
-              <p>Primeiro card do Hub, usado para divulgar Games, Eventos ou Shop.</p>
+        <div class="settings-shell">
+          <aside class="settings-sidebar" aria-label="Categorias de ajustes">
+            <div class="settings-menu-group">
+              <strong>HUB</strong>
+              <button class="active" data-settings-tab="hub-featured" type="button">Cards Destaque</button>
+              <button data-settings-tab="hub-live" type="button">Cards Ao Vivo</button>
             </div>
-            <form class="hub-config" data-card="featured">
-              <label>
-                Categoria
-                <select name="target">
-                  <option value="games">Games</option>
-                  <option value="events">Eventos</option>
-                  <option value="shop">Shop</option>
-                </select>
-              </label>
-              <label>
-                Titulo
-                <input name="title" type="text" maxlength="28" />
-              </label>
-              <label>
-                Descricao
-                <textarea name="description" maxlength="120" rows="3"></textarea>
-              </label>
-            </form>
-          </article>
+            <div class="settings-menu-group">
+              <strong>EVENTOS</strong>
+              <button data-settings-tab="events-create" type="button">Criar Evento</button>
+              <button data-settings-tab="events-edit" type="button">Editar Eventos</button>
+            </div>
+            <div class="settings-menu-group">
+              <strong>GAMES</strong>
+              <button data-settings-tab="games-status" type="button">Status dos games</button>
+              <button data-settings-tab="games-edit" type="button">Editar game</button>
+            </div>
+            <div class="settings-menu-group">
+              <strong>SHOP</strong>
+              <button data-settings-tab="shop-create" type="button">Criar Produtos</button>
+              <button data-settings-tab="shop-edit" type="button">Editar Produtos</button>
+            </div>
+            <div class="settings-sidebar-tools">
+              <button id="themeToggle" class="theme-toggle" type="button">Modo escuro</button>
+            </div>
+          </aside>
 
-          <article class="settings-panel">
-            <div class="settings-copy">
-              <h2>Card ao vivo</h2>
-              <p>Segundo card do Hub, ideal para campanhas ativas e chamadas urgentes.</p>
+          <div class="settings-content">
+            <div class="settings-section active" data-settings-section="hub-featured">
+              <article class="settings-panel">
+                <div class="settings-copy">
+                  <h2>Cards Destaque</h2>
+                  <p>Primeiro card do Hub, usado para divulgar Games, Eventos ou Shop.</p>
+                </div>
+                <form class="hub-config" data-card="featured">
+                  <label>
+                    Categoria
+                    <select name="target">
+                      <option value="games">Games</option>
+                      <option value="events">Eventos</option>
+                      <option value="shop">Shop</option>
+                    </select>
+                  </label>
+                  <label>
+                    Titulo
+                    <input name="title" type="text" maxlength="28" />
+                  </label>
+                  <label>
+                    Descricao
+                    <textarea name="description" maxlength="120" rows="3"></textarea>
+                  </label>
+                </form>
+              </article>
             </div>
-            <form class="hub-config" data-card="live">
-              <label>
-                Categoria
-                <select name="target">
-                  <option value="events">Eventos</option>
-                  <option value="games">Games</option>
-                  <option value="shop">Shop</option>
-                </select>
-              </label>
-              <label>
-                Titulo
-                <input name="title" type="text" maxlength="28" />
-              </label>
-              <label>
-                Descricao
-                <textarea name="description" maxlength="120" rows="3"></textarea>
-              </label>
-            </form>
-          </article>
 
-          <article class="settings-panel">
-            <div class="settings-copy">
-              <h2>Modo visual</h2>
-              <p>Alternancia temporaria entre modo claro e escuro para testar a interface.</p>
+            <div class="settings-section" data-settings-section="hub-live">
+              <article class="settings-panel">
+                <div class="settings-copy">
+                  <h2>Cards Ao Vivo</h2>
+                  <p>Segundo card do Hub, ideal para campanhas ativas e chamadas urgentes.</p>
+                </div>
+                <form class="hub-config" data-card="live">
+                  <label>
+                    Categoria
+                    <select name="target">
+                      <option value="events">Eventos</option>
+                      <option value="games">Games</option>
+                      <option value="shop">Shop</option>
+                    </select>
+                  </label>
+                  <label>
+                    Titulo
+                    <input name="title" type="text" maxlength="28" />
+                  </label>
+                  <label>
+                    Descricao
+                    <textarea name="description" maxlength="120" rows="3"></textarea>
+                  </label>
+                </form>
+              </article>
             </div>
-            <button id="themeToggle" class="theme-toggle" type="button">Modo escuro</button>
-          </article>
 
-          <article class="settings-panel wide">
-            <div class="settings-copy">
-              <h2>Criar evento</h2>
-              <p>Configure o evento principal exibido no Hub, na categoria Eventos e na pagina de detalhes.</p>
+            <div class="settings-section" data-settings-section="events-create">
+              <article class="settings-panel">
+                <div class="settings-copy">
+                  <h2>Criar Evento</h2>
+                  <p>Configure o evento principal exibido no Hub, na categoria Eventos e na pagina de detalhes.</p>
+                </div>
+                <form class="event-config">
+                  <label>
+                    Titulo do evento
+                    <input name="title" type="text" maxlength="48" />
+                  </label>
+                  <label>
+                    Descrição principal
+                    <textarea name="mainDescription" maxlength="160" rows="3"></textarea>
+                  </label>
+                  <label>
+                    Banner principal
+                    <input name="bannerUrl" type="url" placeholder="https://..." />
+                  </label>
+                  <div class="form-row">
+                    <label>
+                      Horas
+                      <input name="hours" type="text" maxlength="24" />
+                    </label>
+                    <label>
+                      Local
+                      <input name="location" type="text" maxlength="42" />
+                    </label>
+                    <label>
+                      Premiação
+                      <input name="reward" type="text" maxlength="48" />
+                    </label>
+                  </div>
+                  <label>
+                    Descrição do evento dentro do card
+                    <textarea name="detailDescription" rows="8"></textarea>
+                  </label>
+                  <button class="button primary settings-submit" type="submit">Criar evento</button>
+                </form>
+              </article>
             </div>
-            <form class="event-config">
-              <label>
-                Titulo do evento
-                <input name="title" type="text" maxlength="48" />
-              </label>
-              <label>
-                Descrição principal
-                <textarea name="mainDescription" maxlength="160" rows="3"></textarea>
-              </label>
-              <label>
-                Banner principal
-                <input name="bannerUrl" type="url" placeholder="https://..." />
-              </label>
-              <div class="form-row">
-                <label>
-                  Horas
-                  <input name="hours" type="text" maxlength="24" />
-                </label>
-                <label>
-                  Local
-                  <input name="location" type="text" maxlength="42" />
-                </label>
-                <label>
-                  Premiação
-                  <input name="reward" type="text" maxlength="48" />
-                </label>
-              </div>
-              <label>
-                Descrição do evento dentro do card
-                <textarea name="detailDescription" rows="8"></textarea>
-              </label>
-              <button class="button primary settings-submit" type="submit">Criar evento</button>
-            </form>
-          </article>
 
-          <article class="settings-panel wide">
-            <div class="settings-copy">
-              <h2>Criar produto</h2>
-              <p>Cadastre novos itens para aparecerem no Shop com categoria, raridade, banner, valor e quantidade.</p>
+            <div class="settings-section" data-settings-section="events-edit">
+              <article class="settings-panel">
+                <div class="settings-copy">
+                  <h2>Editar Eventos</h2>
+                  <p>Gerencie eventos publicados, ajuste banners, textos e status de participação.</p>
+                </div>
+                <div class="settings-placeholder">
+                  <strong>Editor de eventos</strong>
+                  <span>Lista de eventos salvos no banco pronta para a proxima etapa.</span>
+                </div>
+              </article>
             </div>
-            <form class="product-config">
-              <label>
-                Nome do produto
-                <input name="name" type="text" maxlength="48" />
-              </label>
-              <label>
-                Descrição
-                <textarea name="description" maxlength="180" rows="3"></textarea>
-              </label>
-              <div class="form-row">
-                <label>
-                  Categoria
-                  <select name="category">
-                    <option value="fivem">Fivem</option>
-                    <option value="frame">Molduras</option>
-                    <option value="theme">Temas</option>
-                    <option value="title">Tag</option>
-                  </select>
-                </label>
-                <label>
-                  Raridade
-                  <select name="rarity">
-                    <option value="common">Comum</option>
-                    <option value="rare">Raro</option>
-                    <option value="epic">Épico</option>
-                    <option value="legendary">Lendário</option>
-                    <option value="ultra">Ultra</option>
-                  </select>
-                </label>
-                <label>
-                  Valor
-                  <input name="price" type="number" min="0" step="1" value="0" />
-                </label>
-              </div>
-              <label>
-                Banner
-                <input name="bannerUrl" type="url" placeholder="https://..." />
-              </label>
-              <label>
-                Quantidade do produto
-                <input name="quantity" type="number" min="1" step="1" value="1" />
-              </label>
-              <button class="button primary settings-submit" type="submit">Criar produto</button>
-            </form>
-          </article>
 
-          <article class="settings-panel wide">
-            <div class="settings-copy">
-              <h2>Configurar jogos</h2>
-              <p>Edite o banner da Roleta ONE exibido no menu da categoria Games.</p>
+            <div class="settings-section" data-settings-section="games-status">
+              <article class="settings-panel">
+                <div class="settings-copy">
+                  <h2>Status dos games</h2>
+                  <p>Controle o estado do game exibido na categoria Games.</p>
+                </div>
+                <form class="game-status-config" data-game="roulette">
+                  <label>
+                    Roleta ONE
+                    <select name="status">
+                      <option value="Disponivel">Disponivel</option>
+                      <option value="Evento ativo">Evento ativo</option>
+                      <option value="Teste beta">Teste beta</option>
+                      <option value="Em manutencao">Em manutencao</option>
+                    </select>
+                  </label>
+                </form>
+              </article>
             </div>
-            <form class="game-config" data-game="roulette">
-              <label>
-                Status
-                <select name="status">
-                  <option value="Disponivel">Disponivel</option>
-                  <option value="Evento ativo">Evento ativo</option>
-                  <option value="Teste beta">Teste beta</option>
-                  <option value="Em manutencao">Em manutencao</option>
-                </select>
-              </label>
-              <label>
-                Titulo
-                <input name="title" type="text" maxlength="28" />
-              </label>
-              <label>
-                Descricao
-                <textarea name="description" maxlength="130" rows="3"></textarea>
-              </label>
-              <label>
-                Link da imagem do banner
-                <input name="imageUrl" type="url" placeholder="https://..." />
-              </label>
-            </form>
-          </article>
+
+            <div class="settings-section" data-settings-section="games-edit">
+              <article class="settings-panel">
+                <div class="settings-copy">
+                  <h2>Editar game</h2>
+                  <p>Edite o banner da Roleta ONE exibido no menu da categoria Games.</p>
+                </div>
+                <form class="game-config" data-game="roulette">
+                  <label>
+                    Titulo
+                    <input name="title" type="text" maxlength="28" />
+                  </label>
+                  <label>
+                    Descricao
+                    <textarea name="description" maxlength="130" rows="3"></textarea>
+                  </label>
+                  <label>
+                    Link da imagem do banner
+                    <input name="imageUrl" type="url" placeholder="https://..." />
+                  </label>
+                </form>
+              </article>
+            </div>
+
+            <div class="settings-section" data-settings-section="shop-create">
+              <article class="settings-panel">
+                <div class="settings-copy">
+                  <h2>Criar Produtos</h2>
+                  <p>Cadastre novos itens para aparecerem no Shop com categoria, raridade, banner, valor e quantidade.</p>
+                </div>
+                <form class="product-config">
+                  <label>
+                    Nome do produto
+                    <input name="name" type="text" maxlength="48" />
+                  </label>
+                  <label>
+                    Descrição
+                    <textarea name="description" maxlength="180" rows="3"></textarea>
+                  </label>
+                  <div class="form-row">
+                    <label>
+                      Categoria
+                      <select name="category">
+                        <option value="fivem">Fivem</option>
+                        <option value="frame">Molduras</option>
+                        <option value="theme">Temas</option>
+                        <option value="title">Tag</option>
+                      </select>
+                    </label>
+                    <label>
+                      Raridade
+                      <select name="rarity">
+                        <option value="common">Comum</option>
+                        <option value="rare">Raro</option>
+                        <option value="epic">Épico</option>
+                        <option value="legendary">Lendário</option>
+                        <option value="ultra">Ultra</option>
+                      </select>
+                    </label>
+                    <label>
+                      Valor
+                      <input name="price" type="number" min="0" step="1" value="0" />
+                    </label>
+                  </div>
+                  <label>
+                    Banner
+                    <input name="bannerUrl" type="url" placeholder="https://..." />
+                  </label>
+                  <label>
+                    Quantidade do produto
+                    <input name="quantity" type="number" min="1" step="1" value="1" />
+                  </label>
+                  <button class="button primary settings-submit" type="submit">Criar produto</button>
+                </form>
+              </article>
+            </div>
+
+            <div class="settings-section" data-settings-section="shop-edit">
+              <article class="settings-panel">
+                <div class="settings-copy">
+                  <h2>Editar Produtos</h2>
+                  <p>Gerencie produtos publicados, estoque, preço, raridade e status de exibição.</p>
+                </div>
+                <div class="settings-placeholder">
+                  <strong>Editor de produtos</strong>
+                  <span>Lista de produtos do Shop pronta para a proxima etapa.</span>
+                </div>
+              </article>
+            </div>
+          </div>
         </div>
       </section>
     </main>
