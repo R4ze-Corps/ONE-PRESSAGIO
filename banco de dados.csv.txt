@@ -1,0 +1,110 @@
+collection,campo,tipo,obrigatorio,exemplo,descricao
+users,_id,ObjectId,sim,665f1a...,ID interno do usuário
+users,discordId,string,sim,1234567890,ID do Discord
+users,username,string,sim,ONE HUB,Nome exibido
+users,avatarUrl,string,nao,https...,Avatar do usuário
+users,level,number,sim,18,Level do perfil
+users,ranking,string,nao,Prata,Ranking do usuário
+users,role,string,sim,user,user ou admin
+users,createdAt,date,sim,2026-06-04T220000Z,Data de criação
+
+wallets,_id,ObjectId,sim,665f1b...,ID da carteira
+wallets,userId,ObjectId,sim,665f1a...,Referência ao usuário
+wallets,oneCoins,number,sim,1250,Saldo de ONE COIN
+wallets,tickets,number,sim,0,Tickets disponíveis
+wallets,multiplierActive,number,nao,2,Multiplicador ativo
+wallets,multiplierSpinsLeft,number,nao,3,Giros restantes do multiplicador
+wallets,updatedAt,date,sim,2026-06-04T220000Z,Última atualização
+
+wallet_transactions,_id,ObjectId,sim,665f1c...,ID da transação
+wallet_transactions,userId,ObjectId,sim,665f1a...,Usuário da transação
+wallet_transactions,type,string,sim,gain,gain ou spend
+wallet_transactions,source,string,sim,roulette,roulette shop event admin
+wallet_transactions,amount,number,sim,50,Quantidade movimentada
+wallet_transactions,balanceAfter,number,sim,1300,Saldo após a ação
+wallet_transactions.createdAt,date,sim,2026-06-04T220000Z,Data da transação
+
+shop_products,_id,ObjectId,sim,665f1d...,ID do produto
+shop_products,name,string,sim,Angel White,Nome do produto
+shop_products,description,string,nao,Moldura angelical branca,Descrição do produto
+shop_products,category,string,sim,frame,fivem frame theme title
+shop_products,rarity,string,sim,common,common rare epic legendary ultra
+shop_products,bannerUrl,string,nao,https...,Imagem do produto
+shop_products,price,number,sim,420,Valor em ONE COIN
+shop_products,quantity,number,sim,10,Quantidade em estoque
+shop_products,isActive,boolean,sim,true,Produto ativo no shop
+shop_products,createdBy,ObjectId,nao,665f1a...,Admin que criou
+shop_products,createdAt,date,sim,2026-06-04T220000Z,Data de criação
+
+user_inventory,_id,ObjectId,sim,665f1e...,ID do inventário
+user_inventory,userId,ObjectId,sim,665f1a...,Dono do item
+user_inventory,productId,ObjectId,sim,665f1d...,Produto comprado
+user_inventory,isEquipped,boolean,sim,false,Se está equipado
+user_inventory,createdAt,date,sim,2026-06-04T220000Z,Data da compra
+
+profile_equipment,_id,ObjectId,sim,665f1f...,ID da configuração
+profile_equipment,userId,ObjectId,sim,665f1a...,Usuário
+profile_equipment,frameProductId,ObjectId,nao,665f1d...,Moldura equipada
+profile_equipment,themeProductId,ObjectId,nao,665f1d...,Tema equipado
+profile_equipment,tagProductId,ObjectId,nao,665f1d...,Tag equipada
+profile_equipment,updatedAt,date,sim,2026-06-04T220000Z,Última atualização
+
+events,_id,ObjectId,sim,665f20...,ID do evento
+events,title,string,sim,BARATA X HUMANOS,Título do evento
+events,mainDescription,string,sim,Preparem-se...,Descrição principal
+events,detailDescription,string,nao,No início do evento...,Descrição completa
+events,bannerUrl,string,nao,https...,Banner do evento
+events,eventTime,string,nao,2200 Horas,Horário do evento
+events,location,string,nao,Hotel Presságio,Local do evento
+events,reward,string,nao,350K + 10 One Coins,Premiação
+events,status,string,sim,active,active upcoming ended
+events,createdBy,ObjectId,nao,665f1a...,Admin que criou
+events,createdAt,date,sim,2026-06-04T220000Z,Data de criação
+
+event_participants,_id,ObjectId,sim,665f21...,ID da participação
+event_participants,eventId,ObjectId,sim,665f20...,Evento
+event_participants,userId,ObjectId,sim,665f1a...,Participante
+event_participants,status,string,sim,joined,joined left winner
+event_participants,joinedAt,date,sim,2026-06-04T220000Z,Data de entrada
+
+games,_id,ObjectId,sim,665f22...,ID do jogo
+games,name,string,sim,Roleta ONE,Nome do jogo
+games,status,string,sim,available,available beta maintenance hidden
+games,description,string,nao,Gire para ganhar...,Descrição do jogo
+games,bannerUrl,string,nao,https...,Banner do jogo
+games,isActive,boolean,sim,true,Se aparece no site
+games,createdAt,date,sim,2026-06-04T220000Z,Data de criação
+
+roulette_config,_id,ObjectId,sim,665f23...,ID da configuração
+roulette_config,spinCostCoins,number,sim,50,Custo em ONE COIN
+roulette_config,spinCostTicket,number,sim,1,Custo em ticket
+roulette_config,jackpotChance,number,sim,1,Chance de jackpot
+roulette_config,ticketChance,number,sim,20,Chance de ticket
+roulette_config,coinsChance,number,sim,40,Chance de ONE COIN
+roulette_config,multiplierChance,number,sim,10,Chance de multiplicador
+roulette_config,retryChance,number,sim,29,Chance de tentar novamente
+roulette_config,updatedAt,date,sim,2026-06-04T220000Z,Última atualização
+
+roulette_spins,_id,ObjectId,sim,665f24...,ID do giro
+roulette_spins,userId,ObjectId,sim,665f1a...,Usuário que girou
+roulette_spins,paymentType,string,sim,one_coin,one_coin ou ticket
+roulette_spins,cost,number,sim,50,Custo pago
+roulette_spins,resultType,string,sim,ticket,coins ticket multiplier jackpot retry
+roulette_spins,rewardAmount,number,nao,1,Valor ganho
+roulette_spins.createdAt,date,sim,2026-06-04T220000Z,Data do giro
+
+hub_cards,_id,ObjectId,sim,665f25...,ID do card
+hub_cards,slot,string,sim,live,featured ou live
+hub_cards,target,string,sim,event-detail,games events shop event-detail
+hub_cards,title,string,sim,BARATA X HUMANOS,Título do card
+hub_cards,description,string,nao,Preparem-se...,Descrição do card
+hub_cards,imageUrl,string,nao,https...,Imagem do card
+hub_cards,isActive,boolean,sim,true,Card ativo
+hub_cards,updatedAt,date,sim,2026-06-04T220000Z,Última atualização
+
+admin_logs,_id,ObjectId,sim,665f26...,ID do log
+admin_logs,userId,ObjectId,sim,665f1a...,Admin responsável
+admin_logs,action,string,sim,create_product,Ação realizada
+admin_logs,entityType,string,sim,shop_product,produto evento hub jogo user
+admin_logs,entityId,ObjectId,nao,665f1d...,ID do item alterado
+admin_logs,createdAt,date,sim,2026-06-04T220000Z,Data do log

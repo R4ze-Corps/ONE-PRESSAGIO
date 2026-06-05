@@ -39,6 +39,7 @@
             </svg>
             Entrar com Discord
           </button>
+          <button id="testLogin" class="test-login" type="button">Login teste</button>
         </div>
       </section>
 
@@ -75,20 +76,84 @@
           <p>Participe de temporadas, desafios de ranking e campanhas com shop temporario.</p>
         </div>
 
-        <article class="event-card">
-          <div class="event-mark">*</div>
+        <article class="event-card" data-open-event>
+          <div class="event-mark banner-mark">
+            <img id="eventCardBanner" src="https://r2.fivemanage.com/vLUsF9vzqBOo7DSFHERFX/imagem_2026-06-04_164833039.png" alt="Banner Barata X Humanos" />
+          </div>
           <div class="event-copy">
             <span class="status">Ativo agora</span>
-            <h2>Liga dos Campeoes ONE</h2>
-            <p>Jogue diariamente para subir no ranking. Os melhores jogadores ganham bordas de avatar, titulos raros e bonus de ONE COIN.</p>
-            <div class="event-stats">
-              <span><strong>48h</strong> restantes</span>
-              <span><strong>3x</strong> ONE COIN</span>
-              <span><strong>7</strong> recompensas</span>
+            <h2 id="eventCardTitle">BARATA X HUMANOS</h2>
+            <p id="eventCardDescription">Preparem-se para uma guerra caótica dentro do labirinto!</p>
+            <div id="eventCardTags" class="event-stats">
+              <span>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M5 3 2 6"/><path d="m22 6-3-3"/><path d="M6.38 18.7 4 21"/><path d="M17.64 18.67 20 21"/></svg>
+                <strong>22:00</strong> Horas
+              </span>
+              <span>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
+                Hotel Presságio
+              </span>
+              <span>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7v14"/><path d="M20 11v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"/><path d="M7.5 7a1 1 0 0 1 0-5A4.8 8 0 0 1 12 7a4.8 8 0 0 1 4.5-5 1 1 0 0 1 0 5"/><rect x="3" y="7" width="18" height="4" rx="1"/></svg>
+                <strong>350K</strong> + 10 One Coins
+              </span>
             </div>
           </div>
-          <button id="joinEvent" class="button primary">Participar</button>
+          <button id="joinEvent" class="button primary" type="button">Participar</button>
         </article>
+      </section>
+
+      <section id="event-detail" class="page">
+        <div class="event-detail-view">
+          <div class="game-detail-bar">
+            <a class="button secondary" href="#events">Voltar aos eventos</a>
+          </div>
+
+          <article class="event-detail-card">
+            <span class="status">Ativo agora</span>
+            <h1 id="eventDetailTitle">BARATA X HUMANOS</h1>
+            <p id="eventDetailMainDescription">Preparem-se para uma guerra caótica dentro do labirinto!</p>
+            <div id="eventDetailDescription" class="event-detail-description">
+              <p>
+                No início do evento, os humanos entrarão primeiro no labirinto para se esconderem e se posicionarem. Logo depois, as baratas serão liberadas e a batalha começará.
+              </p>
+              <p>
+                Todos os participantes receberão tacos para se defender e atacar. A partir daí, será uma verdadeira guerra entre <strong>Baratas x Humanos</strong> até uma das equipes sair vencedora.
+              </p>
+              <div class="event-info-list">
+                <span>Data: Hoje</span>
+                <span>Horário: 22:00</span>
+                <span>Local: Hotel Presságio</span>
+              </div>
+              <p><strong>Premiação para a equipe vencedora:</strong><br />300K + 10 One Coins</p>
+              <div class="event-info-list">
+                <strong>Regras básicas:</strong>
+                <span>Proibido abusar de bugs ou animações.</span>
+                <span>Proibido sair da área do evento.</span>
+                <span>Use estratégia, se esconda, ataque e sobreviva com sua equipe.</span>
+              </div>
+              <p>
+                <strong>Escolha seu lado e venha para essa guerra insana.</strong><br />Hoje, às 22:00, no Hotel Presságio.
+              </p>
+            </div>
+            <div id="eventDetailTags" class="event-stats">
+              <span>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M5 3 2 6"/><path d="m22 6-3-3"/><path d="M6.38 18.7 4 21"/><path d="M17.64 18.67 20 21"/></svg>
+                <strong>22:00</strong> Horas
+              </span>
+              <span>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></svg>
+                Hotel Presságio
+              </span>
+              <span>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7v14"/><path d="M20 11v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"/><path d="M7.5 7a1 1 0 0 1 0-5A4.8 8 0 0 1 12 7a4.8 8 0 0 1 4.5-5 1 1 0 0 1 0 5"/><rect x="3" y="7" width="18" height="4" rx="1"/></svg>
+                <strong>350K</strong> + 10 One Coins
+              </span>
+            </div>
+            <button id="eventDetailAction" class="button primary event-action" type="button">Participar</button>
+            <img id="eventDetailBanner" class="event-detail-image" src="https://r2.fivemanage.com/vLUsF9vzqBOo7DSFHERFX/imagem_2026-06-04_164833039.png" alt="Banner Barata X Humanos" />
+          </article>
+        </div>
       </section>
 
       <section id="games" class="page">
@@ -201,7 +266,7 @@
             Temas
             <span aria-hidden="true"></span>
           </button>
-          <button data-shop-filter="title" type="button">Titulos</button>
+          <button data-shop-filter="title" type="button">Tag</button>
           <button data-shop-filter="owned" type="button">Comprados</button>
         </div>
         <div class="filters subfilters frame-subfilters hidden" aria-label="Raridade das molduras">
@@ -270,7 +335,7 @@
                 <strong id="equippedTheme">Nenhum</strong>
               </div>
               <div>
-                <span>Titulo</span>
+                <span>Tag</span>
                 <strong id="equippedTitle">Novato</strong>
               </div>
             </div>
@@ -360,6 +425,97 @@
               <p>Alternancia temporaria entre modo claro e escuro para testar a interface.</p>
             </div>
             <button id="themeToggle" class="theme-toggle" type="button">Modo escuro</button>
+          </article>
+
+          <article class="settings-panel wide">
+            <div class="settings-copy">
+              <h2>Criar evento</h2>
+              <p>Configure o evento principal exibido no Hub, na categoria Eventos e na pagina de detalhes.</p>
+            </div>
+            <form class="event-config">
+              <label>
+                Titulo do evento
+                <input name="title" type="text" maxlength="48" />
+              </label>
+              <label>
+                Descrição principal
+                <textarea name="mainDescription" maxlength="160" rows="3"></textarea>
+              </label>
+              <label>
+                Banner principal
+                <input name="bannerUrl" type="url" placeholder="https://..." />
+              </label>
+              <div class="form-row">
+                <label>
+                  Horas
+                  <input name="hours" type="text" maxlength="24" />
+                </label>
+                <label>
+                  Local
+                  <input name="location" type="text" maxlength="42" />
+                </label>
+                <label>
+                  Premiação
+                  <input name="reward" type="text" maxlength="48" />
+                </label>
+              </div>
+              <label>
+                Descrição do evento dentro do card
+                <textarea name="detailDescription" rows="8"></textarea>
+              </label>
+              <button class="button primary settings-submit" type="submit">Criar evento</button>
+            </form>
+          </article>
+
+          <article class="settings-panel wide">
+            <div class="settings-copy">
+              <h2>Criar produto</h2>
+              <p>Cadastre novos itens para aparecerem no Shop com categoria, raridade, banner, valor e quantidade.</p>
+            </div>
+            <form class="product-config">
+              <label>
+                Nome do produto
+                <input name="name" type="text" maxlength="48" />
+              </label>
+              <label>
+                Descrição
+                <textarea name="description" maxlength="180" rows="3"></textarea>
+              </label>
+              <div class="form-row">
+                <label>
+                  Categoria
+                  <select name="category">
+                    <option value="fivem">Fivem</option>
+                    <option value="frame">Molduras</option>
+                    <option value="theme">Temas</option>
+                    <option value="title">Tag</option>
+                  </select>
+                </label>
+                <label>
+                  Raridade
+                  <select name="rarity">
+                    <option value="common">Comum</option>
+                    <option value="rare">Raro</option>
+                    <option value="epic">Épico</option>
+                    <option value="legendary">Lendário</option>
+                    <option value="ultra">Ultra</option>
+                  </select>
+                </label>
+                <label>
+                  Valor
+                  <input name="price" type="number" min="0" step="1" value="0" />
+                </label>
+              </div>
+              <label>
+                Banner
+                <input name="bannerUrl" type="url" placeholder="https://..." />
+              </label>
+              <label>
+                Quantidade do produto
+                <input name="quantity" type="number" min="1" step="1" value="1" />
+              </label>
+              <button class="button primary settings-submit" type="submit">Criar produto</button>
+            </form>
           </article>
 
           <article class="settings-panel wide">
