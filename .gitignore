@@ -1,4 +1,5 @@
 .env
 node_modules/
+data.json
 node-server*.log
 npm-debug.log*

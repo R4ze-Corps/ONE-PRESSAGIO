@@ -1,5 +1,9 @@
 import "dotenv/config";
-import { createReadStream, existsSync } from "node:fs";
+import {
+  createReadStream,
+  existsSync,
+  promises as fs,
+} from "node:fs";
 import { extname, join, normalize } from "node:path";
 import { createServer } from "node:http";
 import { MongoClient } from "mongodb";
@@ -9,8 +13,10 @@ const host = "127.0.0.1";
 const root = process.cwd();
 const mongoUri = process.env.MONGODB_URI;
 const mongoDbName = process.env.MONGODB_DB || "one_hub";
+const dataFile = join(root, "data.json");
 let mongoClient;
 let mongoDb;
+let useJsonFallback = !mongoUri;
 
 const contentTypes = {
   ".html": "text/html; charset=utf-8",
@@ -32,13 +38,37 @@ function resolvePath(url) {
 }
 
 async function getDb() {
-  if (!mongoUri) throw new Error("MONGODB_URI nao configurada no .env");
+  if (useJsonFallback) return null;
   if (!mongoClient) {
-    mongoClient = new MongoClient(mongoUri);
-    await mongoClient.connect();
-    mongoDb = mongoClient.db(mongoDbName);
+    try {
+      mongoClient = new MongoClient(mongoUri);
+      await mongoClient.connect();
+      mongoDb = mongoClient.db(mongoDbName);
+    } catch (error) {
+      console.warn(`MongoDB indisponivel, usando data.json: ${error.message}`);
+      useJsonFallback = true;
+      return null;
+    }
   }
   return mongoDb;
+}
+
+async function readDataFile() {
+  if (!existsSync(dataFile)) {
+    return { shop_products: [], events: [] };
+  }
+  const content = await fs.readFile(dataFile, "utf8");
+  return content.trim()
+    ? JSON.parse(content)
+    : { shop_products: [], events: [] };
+}
+
+async function writeDataFile(data) {
+  await fs.writeFile(dataFile, `${JSON.stringify(data, null, 2)}\n`, "utf8");
+}
+
+function createLocalId() {
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
 function sendJson(response, status, data) {
@@ -60,7 +90,7 @@ async function readJson(request) {
 
 function normalizeProduct(product) {
   return {
-    id: product._id.toString(),
+    id: (product._id || product.id).toString(),
     name: product.name,
     description: product.description || "",
     category: product.category || "fivem",
@@ -75,7 +105,7 @@ function normalizeProduct(product) {
 
 function normalizeEvent(event) {
   return {
-    id: event._id.toString(),
+    id: (event._id || event.id).toString(),
     title: event.title,
     mainDescription: event.mainDescription,
     detailDescription: event.detailDescription || "",
@@ -98,6 +128,18 @@ async function handleApi(request, response, pathname) {
     const db = await getDb();
 
     if (pathname === "/api/shop-products" && request.method === "GET") {
+      if (!db) {
+        const data = await readDataFile();
+        sendJson(
+          response,
+          200,
+          data.shop_products
+            .filter((product) => product.isActive !== false)
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+            .map(normalizeProduct),
+        );
+        return true;
+      }
       const products = await db
         .collection("shop_products")
         .find({ isActive: { $ne: false } })
@@ -120,12 +162,28 @@ async function handleApi(request, response, pathname) {
         isActive: true,
         createdAt: new Date(),
       };
+      if (!db) {
+        const data = await readDataFile();
+        const localProduct = { ...product, id: createLocalId() };
+        data.shop_products.unshift(localProduct);
+        await writeDataFile(data);
+        sendJson(response, 201, normalizeProduct(localProduct));
+        return true;
+      }
       const result = await db.collection("shop_products").insertOne(product);
       sendJson(response, 201, normalizeProduct({ ...product, _id: result.insertedId }));
       return true;
     }
 
     if (pathname === "/api/events/latest" && request.method === "GET") {
+      if (!db) {
+        const data = await readDataFile();
+        const event = data.events
+          .filter((item) => item.status === "active")
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+        sendJson(response, 200, event ? normalizeEvent(event) : null);
+        return true;
+      }
       const event = await db
         .collection("events")
         .find({ status: "active" })
@@ -149,6 +207,14 @@ async function handleApi(request, response, pathname) {
         status: "active",
         createdAt: new Date(),
       };
+      if (!db) {
+        const data = await readDataFile();
+        const localEvent = { ...event, id: createLocalId() };
+        data.events.unshift(localEvent);
+        await writeDataFile(data);
+        sendJson(response, 201, normalizeEvent(localEvent));
+        return true;
+      }
       const result = await db.collection("events").insertOne(event);
       sendJson(response, 201, normalizeEvent({ ...event, _id: result.insertedId }));
       return true;
