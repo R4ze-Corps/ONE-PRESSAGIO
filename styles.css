@@ -181,7 +181,10 @@ body.auth-locked .topbar {
   display: none;
 }
 
-body:not(.has-admin-role) .admin-only,
+body.auth-locked {
+  background: #020302;
+}
+
 body:not(.has-admin-role) .test-login {
   display: none;
 }
@@ -189,8 +192,8 @@ body:not(.has-admin-role) .test-login {
 body.auth-locked main {
   display: grid;
   min-height: 100vh;
-  width: min(620px, calc(100% - 32px));
-  padding: 24px 0;
+  width: min(1120px, calc(100% - 32px));
+  padding: 34px 0;
   place-items: center;
 }
 
@@ -209,40 +212,110 @@ body.auth-locked .page.active {
 
 .login-shell {
   display: grid;
-  justify-items: center;
-  gap: 18px;
-  border: 1px solid var(--line);
-  border-radius: 28px;
-  padding: clamp(30px, 7vw, 56px);
+  grid-template-columns: minmax(280px, 430px) minmax(280px, 360px);
+  align-items: center;
+  justify-content: center;
+  gap: clamp(42px, 8vw, 96px);
+  width: 100%;
+  min-height: min(680px, calc(100vh - 68px));
+  border-radius: 0;
+  padding: clamp(24px, 5vw, 54px);
   background:
-    radial-gradient(circle at 50% 0%, rgba(88, 101, 242, 0.18), transparent 34%),
-    var(--panel);
-  box-shadow: var(--shadow);
-  text-align: center;
-}
-
-.login-brand {
-  display: grid;
-  place-items: center;
-  width: 76px;
-  height: 76px;
-  border-radius: 24px;
-  color: #fff;
-  background: linear-gradient(145deg, #0071e3, #5ac8fa);
-  font-size: 1.35rem;
-  font-weight: 800;
+    radial-gradient(circle at 24% 52%, rgba(133, 255, 101, 0.16), transparent 28%),
+    radial-gradient(circle at 78% 50%, rgba(10, 132, 255, 0.08), transparent 24%),
+    #020302;
+  color: #f7f7f7;
+  box-shadow: none;
 }
 
 .login-shell h1 {
-  margin: 0;
-  font-size: clamp(2.6rem, 7vw, 4.8rem);
+  margin: 0 0 24px;
+  font-size: clamp(1.9rem, 4vw, 2.45rem);
+  line-height: 1;
+  font-weight: 750;
+  text-align: center;
 }
 
-.login-shell p:not(.eyebrow) {
-  max-width: 440px;
-  margin: 0;
-  color: var(--muted);
-  line-height: 1.55;
+.login-media {
+  position: relative;
+  min-height: 560px;
+  overflow: hidden;
+  border-radius: 34px;
+  background: #0b0d0c;
+  box-shadow:
+    0 34px 80px rgba(0, 0, 0, 0.45),
+    0 0 80px rgba(118, 255, 94, 0.12);
+}
+
+.login-media video {
+  width: 100%;
+  height: 100%;
+  min-height: 560px;
+  display: block;
+  object-fit: cover;
+}
+
+.login-media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 44%, rgba(0, 0, 0, 0.74));
+}
+
+.login-media-copy {
+  position: absolute;
+  z-index: 1;
+  left: 28px;
+  right: 28px;
+  bottom: 28px;
+  display: grid;
+  gap: 10px;
+}
+
+.login-media-copy strong {
+  font-size: 1.45rem;
+  letter-spacing: 0.02em;
+}
+
+.login-media-copy span {
+  max-width: 260px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.login-panel {
+  display: grid;
+  width: 100%;
+}
+
+.login-fields {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.login-fields label {
+  position: relative;
+}
+
+.login-fields span {
+  position: absolute;
+  z-index: 1;
+  left: 18px;
+  top: 50%;
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 0.8rem;
+  transform: translateY(-50%);
+}
+
+.login-fields input {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.24);
 }
 
 .discord-login {
@@ -254,15 +327,17 @@ body.auth-locked .page.active {
   border-radius: 999px;
   padding: 0 24px;
   color: #fff;
-  background: #5865f2;
-  box-shadow: 0 14px 30px rgba(88, 101, 242, 0.25);
+  background: linear-gradient(90deg, #c7383b, #ff4348);
+  box-shadow:
+    0 18px 36px rgba(255, 67, 72, 0.18),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14);
   font-weight: 700;
   transition: transform 160ms ease, background 160ms ease;
 }
 
 .discord-login:hover {
   transform: scale(1.02);
-  background: #4752c4;
+  background: linear-gradient(90deg, #d84144, #ff5459);
 }
 
 .discord-login svg {
@@ -271,12 +346,13 @@ body.auth-locked .page.active {
 }
 
 .test-login {
+  margin-top: 14px;
   min-height: 42px;
-  border: 1px solid var(--line);
+  border: 1px solid rgba(255, 255, 255, 0.13);
   border-radius: 999px;
   padding: 0 18px;
-  color: var(--text);
-  background: var(--panel-soft);
+  color: #f7f7f7;
+  background: rgba(255, 255, 255, 0.04);
   font-weight: 700;
   transition: transform 160ms ease, border-color 160ms ease;
 }
@@ -284,6 +360,18 @@ body.auth-locked .page.active {
 .test-login:hover {
   border-color: var(--accent);
   transform: scale(1.02);
+}
+
+.login-panel p {
+  margin: 42px 0 0;
+  color: rgba(255, 255, 255, 0.4);
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.login-panel p span {
+  color: #ff484d;
 }
 
 @keyframes fadeUp {
@@ -2057,6 +2145,46 @@ h1 {
   align-items: start;
 }
 
+.settings-access-gate {
+  display: grid;
+  gap: 16px;
+  max-width: 520px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 24px;
+  background: var(--panel);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+}
+
+.settings-access-gate h2 {
+  margin-bottom: 6px;
+  font-size: 1.45rem;
+}
+
+.settings-access-gate p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.settings-access-gate label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.settings-access-gate input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px 13px;
+  color: var(--text);
+  background: var(--panel-soft);
+  font: inherit;
+  outline: none;
+}
+
 .settings-sidebar {
   position: sticky;
   top: 88px;
@@ -2452,12 +2580,6 @@ body.dark-mode .toast {
   background: rgba(17, 20, 27, 0.9);
 }
 
-body.dark-mode .login-shell {
-  background:
-    radial-gradient(circle at 50% 0%, rgba(88, 101, 242, 0.24), transparent 34%),
-    var(--panel);
-}
-
 body.dark-mode .button.secondary,
 body.dark-mode .filters button,
 body.dark-mode .inventory-list button,
@@ -2599,6 +2721,23 @@ body.dark-mode .carousel-prize.jackpot {
 
   .game-detail-bar {
     display: grid;
+  }
+
+  .login-shell {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    min-height: auto;
+    padding: 18px 0 34px;
+  }
+
+  .login-media,
+  .login-media video {
+    min-height: 380px;
+  }
+
+  .login-panel {
+    max-width: 420px;
+    margin: 0 auto;
   }
 }
 

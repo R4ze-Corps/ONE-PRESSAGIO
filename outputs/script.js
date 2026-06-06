@@ -8,7 +8,7 @@ const DISCORD_CLIENT_ID = "1507207436665229322";
 const DISCORD_API = "https://discord.com/api";
 const DISCORD_GUILD_ID = "1500607972605296713";
 const ADMIN_ROLE_ID = "1503079573124943924";
-const SETTINGS_ACCESS_CODE = "ONEHUB-2026";
+const SETTINGS_ACCESS_CODE = "1507";
 let discordSession = readDiscordSession();
 let isLoggedIn = Boolean(discordSession?.accessToken);
 let discordUser = discordSession?.user || {
@@ -34,6 +34,10 @@ const settingsTabButtons = Array.from(
 const settingsSections = Array.from(
   document.querySelectorAll("[data-settings-section]"),
 );
+const settingsAccessGate = document.querySelector("#settingsAccessGate");
+const settingsAccessInput = document.querySelector("#settingsAccessInput");
+const settingsAccessSubmit = document.querySelector("#settingsAccessSubmit");
+const settingsShell = document.querySelector("#settingsShell");
 const frameSubfilters = document.querySelector(".frame-subfilters");
 const themeSubfilters = document.querySelector(".theme-subfilters");
 const toast = document.querySelector("#toast");
@@ -179,16 +183,24 @@ function hasSettingsAccess() {
   );
 }
 
-function requestSettingsAccess() {
-  if (hasSettingsAccess()) return true;
-  const code = window.prompt("Digite o codigo de acesso aos Ajustes:");
-  if (code?.trim() === SETTINGS_ACCESS_CODE) {
+function updateSettingsAccessView() {
+  const canAccess = hasSettingsAccess();
+  settingsAccessGate?.classList.toggle("hidden", canAccess);
+  settingsShell?.classList.toggle("hidden", !canAccess);
+}
+
+function unlockSettingsWithCode() {
+  const code = settingsAccessInput?.value.trim();
+  if (code === SETTINGS_ACCESS_CODE) {
     sessionStorage.setItem("oneSettingsAccess", "true");
     syncAuthState();
+    updateSettingsAccessView();
     showToast("Acesso aos Ajustes liberado.");
+    settingsAccessInput.value = "";
     return true;
   }
   showToast("Codigo de acesso invalido.");
+  settingsAccessInput?.focus();
   return false;
 }
 
@@ -398,17 +410,7 @@ function showPage() {
     return;
   }
 
-  const canOpenSettings =
-    requested === "settings" ? requestSettingsAccess() : true;
-
-  if (requested === "settings" && !canOpenSettings) {
-    window.history.replaceState(null, "", "#home");
-  }
-
-  const unlockedRequest =
-    requested === "login" || (requested === "settings" && !canOpenSettings)
-      ? "home"
-      : requested;
+  const unlockedRequest = requested === "login" ? "home" : requested;
   const activeId = pages.some(
     (page) => page.id === unlockedRequest && page.id !== "login",
   )
@@ -432,6 +434,7 @@ function showPage() {
   if (activeId === "shop") renderShop();
   if (activeId === "profile") renderInventory();
   if (activeId === "settings") {
+    updateSettingsAccessView();
     syncSettingsForms();
     syncGameConfigForms();
     syncEventConfigForm();
@@ -1233,9 +1236,7 @@ async function toggleEventJoin() {
   try {
     await saveEventParticipation(nextState);
     showToast(
-      nextState
-        ? "Voce esta participando do evento."
-        : "Voce saiu do evento.",
+      nextState ? "Voce esta participando do evento." : "Voce saiu do evento.",
     );
   } catch (error) {
     eventJoined = !nextState;
@@ -1492,6 +1493,11 @@ settingsTabButtons.forEach((button) => {
   button.addEventListener("click", () => {
     showSettingsTab(button.dataset.settingsTab);
   });
+});
+
+settingsAccessSubmit?.addEventListener("click", unlockSettingsWithCode);
+settingsAccessInput?.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") unlockSettingsWithCode();
 });
 
 backToGames.addEventListener("click", showGamesMenu);
