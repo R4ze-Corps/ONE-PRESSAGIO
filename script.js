@@ -8,6 +8,7 @@ const DISCORD_CLIENT_ID = "1507207436665229322";
 const DISCORD_API = "https://discord.com/api";
 const DISCORD_GUILD_ID = "1500607972605296713";
 const ADMIN_ROLE_ID = "1503079573124943924";
+const SETTINGS_ACCESS_CODE = "1507";
 let discordSession = readDiscordSession();
 let isLoggedIn = Boolean(discordSession?.accessToken);
 let discordUser = discordSession?.user || {
@@ -170,6 +171,25 @@ function normalizeDiscordUser(user) {
 
 function hasAdminRole() {
   return discordUser.roles?.includes(ADMIN_ROLE_ID);
+}
+
+function hasSettingsAccess() {
+  return (
+    hasAdminRole() || sessionStorage.getItem("oneSettingsAccess") === "true"
+  );
+}
+
+function requestSettingsAccess() {
+  if (hasSettingsAccess()) return true;
+  const code = window.prompt("Digite o codigo de acesso aos Ajustes:");
+  if (code?.trim() === SETTINGS_ACCESS_CODE) {
+    sessionStorage.setItem("oneSettingsAccess", "true");
+    syncAuthState();
+    showToast("Acesso aos Ajustes liberado.");
+    return true;
+  }
+  showToast("Codigo de acesso invalido.");
+  return false;
 }
 
 async function fetchDiscordRoles(accessToken) {
@@ -378,13 +398,15 @@ function showPage() {
     return;
   }
 
-  if (requested === "settings" && !hasAdminRole()) {
+  const canOpenSettings =
+    requested === "settings" ? requestSettingsAccess() : true;
+
+  if (requested === "settings" && !canOpenSettings) {
     window.history.replaceState(null, "", "#home");
-    showToast("Ajustes liberado apenas para cargo autorizado.");
   }
 
   const unlockedRequest =
-    requested === "login" || (requested === "settings" && !hasAdminRole())
+    requested === "login" || (requested === "settings" && !canOpenSettings)
       ? "home"
       : requested;
   const activeId = pages.some(
@@ -422,7 +444,7 @@ function syncAuthState() {
   document.body.classList.toggle("auth-locked", !isLoggedIn);
   document.body.classList.toggle(
     "has-admin-role",
-    isLoggedIn && hasAdminRole(),
+    isLoggedIn && hasSettingsAccess(),
   );
   document.querySelectorAll("[data-user-name]").forEach((element) => {
     element.textContent = discordUser.name;
@@ -547,6 +569,7 @@ function logoutDiscord() {
   };
   localStorage.removeItem("oneDiscordSession");
   localStorage.removeItem("oneDiscordOAuthState");
+  sessionStorage.removeItem("oneSettingsAccess");
   syncAuthState();
   window.location.hash = "login";
   showToast("Conta Discord desconectada.");
@@ -1210,9 +1233,7 @@ async function toggleEventJoin() {
   try {
     await saveEventParticipation(nextState);
     showToast(
-      nextState
-        ? "Voce esta participando do evento."
-        : "Voce saiu do evento.",
+      nextState ? "Voce esta participando do evento." : "Voce saiu do evento.",
     );
   } catch (error) {
     eventJoined = !nextState;
