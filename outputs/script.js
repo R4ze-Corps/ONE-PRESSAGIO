@@ -120,11 +120,7 @@ const eventDetailDescription = document.querySelector(
 );
 const eventDetailTags = document.querySelector("#eventDetailTags");
 const eventDetailBanner = document.querySelector("#eventDetailBanner");
-const settingsEventTitle = document.querySelector("#settingsEventTitle");
-const settingsEventDate = document.querySelector("#settingsEventDate");
-const settingsEventStatus = document.querySelector("#settingsEventStatus");
-const settingsEditEvent = document.querySelector("#settingsEditEvent");
-const settingsCloseEvent = document.querySelector("#settingsCloseEvent");
+const settingsEventsRows = document.querySelector("#settingsEventsRows");
 const eventEditOverlay = document.querySelector("#eventEditOverlay");
 const eventEditClose = document.querySelector("#eventEditClose");
 const eventEditForm = document.querySelector("#eventEditForm");
@@ -1018,15 +1014,6 @@ function getEventStatusLabel(config = eventConfig) {
   return isEventClosed(config) ? "ENCERRADO" : "ATIVO";
 }
 
-function syncSettingsEventRow() {
-  if (settingsEventTitle) settingsEventTitle.textContent = eventConfig.title;
-  if (settingsEventDate) settingsEventDate.textContent = eventConfig.date;
-  if (settingsEventStatus) {
-    settingsEventStatus.textContent = getEventStatusLabel();
-    settingsEventStatus.classList.toggle("closed", isEventClosed());
-  }
-}
-
 function apiEventToConfig(event) {
   return {
     id: event.id || event._id || event.title || "evento-one",
@@ -1107,6 +1094,98 @@ function renderEventsList() {
   if (!eventsList) return;
   eventsList.innerHTML = "";
   eventItems.forEach((event) => eventsList.append(createPublicEventCard(event)));
+  renderSettingsEventsRows();
+}
+
+function createIconButton(label, icon, onClick) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.setAttribute("aria-label", label);
+  button.innerHTML = icon;
+  button.addEventListener("click", onClick);
+  return button;
+}
+
+const settingsEventActionIcons = {
+  edit:
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
+  close:
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.77.04"/></svg>',
+  delete:
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>',
+  users:
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><path d="M16 3.128a4 4 0 0 1 0 7.744"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><circle cx="9" cy="7" r="4"/></svg>',
+};
+
+function renderSettingsEventsRows() {
+  if (!settingsEventsRows) return;
+  settingsEventsRows.innerHTML = "";
+
+  if (!eventItems.length) {
+    const empty = document.createElement("div");
+    empty.className = "settings-events-row settings-events-empty";
+    empty.textContent = "Nenhum evento criado ainda.";
+    settingsEventsRows.append(empty);
+    return;
+  }
+
+  eventItems.forEach((config, index) => {
+    const row = document.createElement("div");
+    row.className = "settings-events-row";
+    row.setAttribute("role", "row");
+
+    const title = document.createElement("strong");
+    title.setAttribute("role", "cell");
+    title.textContent = config.title;
+
+    const date = document.createElement("span");
+    date.setAttribute("role", "cell");
+    date.textContent = config.date;
+
+    const statusCell = document.createElement("span");
+    statusCell.setAttribute("role", "cell");
+    const status = document.createElement("mark");
+    status.textContent = getEventStatusLabel(config);
+    status.classList.toggle("closed", isEventClosed(config));
+    statusCell.append(status);
+
+    const users = document.createElement("span");
+    users.setAttribute("role", "cell");
+    users.className = "settings-event-users";
+    users.innerHTML = `${settingsEventActionIcons.users}<span>${index === 0 ? 128 : 0}</span>`;
+
+    const actions = document.createElement("span");
+    actions.setAttribute("role", "cell");
+    actions.className = "settings-event-actions";
+    actions.append(
+      createIconButton("Editar evento", settingsEventActionIcons.edit, () => {
+        setCurrentEvent(config);
+        renderEventContent();
+        openEventEditModal();
+      }),
+      createIconButton("Encerrar evento", settingsEventActionIcons.close, () => {
+        const item = eventItems.find((event) => event.id === config.id);
+        if (item) item.status = "closed";
+        if (eventConfig.id === config.id) {
+          eventConfig.status = "closed";
+          eventJoined = false;
+        }
+        renderEventContent();
+        showToast("Evento encerrado.");
+      }),
+      createIconButton("Excluir evento", settingsEventActionIcons.delete, () => {
+        eventItems = eventItems.filter((event) => event.id !== config.id);
+        if (eventConfig.id === config.id && eventItems[0]) {
+          setCurrentEvent(eventItems[0]);
+        }
+        renderEventContent();
+        showToast("Evento removido da lista local.");
+      }),
+    );
+
+    row.append(title, date, statusCell, users, actions);
+    settingsEventsRows.append(row);
+  });
 }
 
 function syncCurrentEventInList() {
@@ -1179,7 +1258,7 @@ function renderEventContent() {
   eventDetailBanner.alt = `Banner ${eventConfig.title}`;
   renderEventTags(eventDetailTags);
   renderEventDescription();
-  syncSettingsEventRow();
+  renderSettingsEventsRows();
   updateEventButtons();
   renderEventsList();
 
@@ -1667,13 +1746,6 @@ async function toggleEventJoin() {
 }
 
 eventDetailAction.addEventListener("click", toggleEventJoin);
-settingsEditEvent?.addEventListener("click", openEventEditModal);
-settingsCloseEvent?.addEventListener("click", () => {
-  eventConfig.status = "closed";
-  eventJoined = false;
-  renderEventContent();
-  showToast("Evento encerrado.");
-});
 eventEditClose?.addEventListener("click", closeEventEditModal);
 eventEditOverlay?.addEventListener("click", (event) => {
   if (event.target === eventEditOverlay) closeEventEditModal();

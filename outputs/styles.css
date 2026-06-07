@@ -3010,6 +3010,10 @@ h1 {
   border-radius: 10px;
 }
 
+#settingsEventsRows {
+  display: contents;
+}
+
 .settings-events-row {
   display: grid;
   grid-template-columns: minmax(170px, 1.6fr) minmax(120px, 0.9fr) minmax(90px, 0.7fr) minmax(100px, 0.8fr) minmax(110px, 0.7fr);
