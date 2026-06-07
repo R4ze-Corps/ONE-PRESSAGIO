@@ -190,6 +190,10 @@ button {
   height: 15px;
 }
 
+.users-directory-button {
+  width: 28px;
+}
+
 .logout-mini {
   width: 28px;
   border-left: 1px solid var(--line);
@@ -3188,6 +3192,123 @@ h1 {
   border: 1px dashed var(--line);
   border-radius: 14px;
   padding: 18px;
+  text-align: center;
+}
+
+.users-directory-modal {
+  width: min(640px, 100%);
+}
+
+.discord-token-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 12px;
+  background: var(--panel-soft);
+}
+
+.discord-token-form label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.discord-token-form input {
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0 12px;
+  color: var(--text);
+  background: var(--panel);
+}
+
+.discord-token-form button {
+  min-height: 42px;
+  padding-inline: 18px;
+}
+
+.users-directory-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel-soft);
+}
+
+.users-directory-tabs button {
+  flex: 1;
+  min-height: 38px;
+  border-radius: 999px;
+  color: var(--muted);
+  background: transparent;
+  font-weight: 800;
+  transition: color 160ms ease, background 160ms ease;
+}
+
+.users-directory-tabs button.active {
+  color: #fff;
+  background: var(--accent);
+}
+
+.users-directory-list {
+  display: grid;
+  gap: 10px;
+  max-height: 380px;
+  overflow: auto;
+}
+
+.users-directory-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 12px;
+  background: var(--panel-soft);
+}
+
+.users-directory-avatar {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--accent);
+  background-position: center;
+  background-size: cover;
+  font-weight: 800;
+}
+
+.users-directory-avatar.has-image {
+  color: transparent;
+}
+
+.users-directory-row span:last-child {
+  display: grid;
+  gap: 2px;
+}
+
+.users-directory-row strong {
+  color: var(--text);
+}
+
+.users-directory-row small,
+.users-directory-empty {
+  color: var(--muted);
+}
+
+.users-directory-empty {
+  margin: 0;
+  border: 1px dashed var(--line);
+  border-radius: 16px;
+  padding: 22px;
   text-align: center;
 }
 

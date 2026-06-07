@@ -14,6 +14,8 @@ const host = "127.0.0.1";
 const root = process.cwd();
 const mongoUri = process.env.MONGODB_URI;
 const mongoDbName = process.env.MONGODB_DB || "one_hub";
+const discordBotToken = process.env.DISCORD_BOT_TOKEN;
+const discordGuildId = process.env.DISCORD_GUILD_ID || "1500607972605296713";
 const dataFile = join(root, "data.json");
 let mongoClient;
 let mongoDb;
@@ -31,6 +33,16 @@ const contentTypes = {
   ".webp": "image/webp",
   ".ico": "image/x-icon",
 };
+
+function createEmptyData() {
+  return {
+    shop_products: [],
+    events: [],
+    event_participants: [],
+    users: [],
+    settings: {},
+  };
+}
 
 function resolvePath(url) {
   const pathname = decodeURIComponent(new URL(url, `http://localhost:${port}`).pathname);
@@ -56,12 +68,12 @@ async function getDb() {
 
 async function readDataFile() {
   if (!existsSync(dataFile)) {
-    return { shop_products: [], events: [], event_participants: [], users: [] };
+    return createEmptyData();
   }
   const content = await fs.readFile(dataFile, "utf8");
-  return content.trim()
-    ? JSON.parse(content)
-    : { shop_products: [], events: [], event_participants: [], users: [] };
+  const data = content.trim() ? JSON.parse(content) : createEmptyData();
+  if (!data.settings) data.settings = {};
+  return data;
 }
 
 async function writeDataFile(data) {
@@ -134,12 +146,32 @@ function normalizeParticipant(participant) {
   };
 }
 
+function normalizeDiscordMember(member) {
+  const user = member.user || {};
+  const name = user.global_name || user.username || "Usuario Discord";
+  return {
+    id: user.id,
+    username: name,
+    discordUsername: user.username || name,
+    avatarUrl: user.avatar
+      ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=128`
+      : "",
+    joinedAt: member.joined_at || null,
+  };
+}
+
 function normalizeUser(user) {
   return {
     id: (user._id || user.id).toString(),
     username: user.username,
     createdAt: user.createdAt,
   };
+}
+
+async function getLocalDiscordBotToken() {
+  if (discordBotToken) return discordBotToken;
+  const data = await readDataFile();
+  return data.settings?.discordBotToken || "";
 }
 
 function hashPassword(password) {
@@ -210,6 +242,68 @@ async function handleApi(request, response, pathname) {
       }
       const result = await db.collection("shop_products").insertOne(product);
       sendJson(response, 201, normalizeProduct({ ...product, _id: result.insertedId }));
+      return true;
+    }
+
+    if (pathname === "/api/users" && request.method === "GET") {
+      if (!db) {
+        const data = await readDataFile();
+        sendJson(response, 200, (data.users || []).map(normalizeUser));
+        return true;
+      }
+
+      const users = await db
+        .collection("users")
+        .find({})
+        .sort({ createdAt: -1 })
+        .toArray();
+      sendJson(response, 200, users.map(normalizeUser));
+      return true;
+    }
+
+    if (pathname === "/api/discord-users" && request.method === "GET") {
+      const token = await getLocalDiscordBotToken();
+      if (!token) {
+        sendJson(response, 200, []);
+        return true;
+      }
+
+      const discordResponse = await fetch(
+        `https://discord.com/api/v10/guilds/${discordGuildId}/members?limit=1000`,
+        {
+          headers: {
+            Authorization: `Bot ${token}`,
+          },
+        },
+      );
+
+      if (!discordResponse.ok) {
+        sendJson(response, discordResponse.status, {
+          error: "Nao foi possivel buscar membros do Discord.",
+        });
+        return true;
+      }
+
+      const members = await discordResponse.json();
+      sendJson(response, 200, members.map(normalizeDiscordMember));
+      return true;
+    }
+
+    if (pathname === "/api/discord-token" && request.method === "POST") {
+      const body = await readJson(request);
+      const token = String(body.token || "").trim();
+      if (!token) {
+        sendJson(response, 400, { error: "Token do bot obrigatorio." });
+        return true;
+      }
+
+      const data = await readDataFile();
+      data.settings = {
+        ...(data.settings || {}),
+        discordBotToken: token,
+      };
+      await writeDataFile(data);
+      sendJson(response, 200, { saved: true });
       return true;
     }
 

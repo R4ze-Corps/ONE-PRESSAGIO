@@ -32,6 +32,14 @@
                 <small>Administrador</small>
               </span>
             </a>
+            <button id="usersDirectoryButton" class="account-icon-button users-directory-button" type="button" aria-label="Abrir usuários">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="2" y="4" width="20" height="16" rx="2" />
+                <path d="M10 4v4" />
+                <path d="M2 8h20" />
+                <path d="M6 4v4" />
+              </svg>
+            </button>
             <button id="topbarLogout" class="account-icon-button logout-mini" type="button" aria-label="Sair da conta">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M11 20H2" />
@@ -854,6 +862,31 @@
           <button id="eventParticipantsClose" class="modal-close" type="button" aria-label="Fechar">×</button>
         </div>
         <div id="eventParticipantsList" class="participants-list"></div>
+      </article>
+    </div>
+
+    <div id="usersDirectoryOverlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="usersDirectoryTitle">
+      <article class="event-edit-modal users-directory-modal">
+        <div class="modal-head">
+          <div>
+            <p class="eyebrow">Usuários</p>
+            <h2 id="usersDirectoryTitle">Diretório do Hub</h2>
+            <p>Discord e logins cadastrados na plataforma.</p>
+          </div>
+          <button id="usersDirectoryClose" class="modal-close" type="button" aria-label="Fechar">×</button>
+        </div>
+        <form id="discordTokenForm" class="discord-token-form">
+          <label>
+            Token do bot Discord
+            <input id="discordBotTokenInput" name="token" type="password" autocomplete="off" placeholder="Cole o token do bot para uso local" />
+          </label>
+          <button class="button primary" type="submit">Salvar token</button>
+        </form>
+        <div class="users-directory-tabs" role="tablist" aria-label="Categorias de usuários">
+          <button class="active" type="button" data-users-view="discord-only">Discord sem login</button>
+          <button type="button" data-users-view="hub-users">Com login no Hub</button>
+        </div>
+        <div id="usersDirectoryList" class="users-directory-list"></div>
       </article>
     </div>
 

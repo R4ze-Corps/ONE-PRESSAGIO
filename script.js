@@ -73,6 +73,15 @@ const discordLogin = document.querySelector("#discordLogin");
 const discordLogout = document.querySelector("#discordLogout");
 const topbarLogout = document.querySelector("#topbarLogout");
 const notificationsButton = document.querySelector("#notificationsButton");
+const usersDirectoryButton = document.querySelector("#usersDirectoryButton");
+const usersDirectoryOverlay = document.querySelector("#usersDirectoryOverlay");
+const usersDirectoryClose = document.querySelector("#usersDirectoryClose");
+const usersDirectoryList = document.querySelector("#usersDirectoryList");
+const usersDirectoryTabs = Array.from(
+  document.querySelectorAll("[data-users-view]"),
+);
+const discordTokenForm = document.querySelector("#discordTokenForm");
+const discordBotTokenInput = document.querySelector("#discordBotTokenInput");
 const accountForm = document.querySelector("#accountForm");
 const accountUsername = document.querySelector("#accountUsername");
 const accountPassword = document.querySelector("#accountPassword");
@@ -143,6 +152,11 @@ let multiplierSpinsLeft = 0;
 let paymentMode = "coins";
 let activeShopFilter = "all";
 let currentPageId = "login";
+let usersDirectoryView = "discord-only";
+let usersDirectoryData = {
+  discordOnly: [],
+  hubUsers: [],
+};
 const frameRarities = ["common", "rare", "epic", "legendary", "ultra"];
 const themeRarities = [
   "theme-common",
@@ -668,6 +682,139 @@ async function saveAccountToDatabase(action, data) {
     throw new Error(result.error || "Nao foi possivel autenticar.");
   }
   return result;
+}
+
+function normalizeDirectoryKey(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function renderUserDirectoryList() {
+  if (!usersDirectoryList) return;
+  const list =
+    usersDirectoryView === "hub-users"
+      ? usersDirectoryData.hubUsers
+      : usersDirectoryData.discordOnly;
+
+  usersDirectoryTabs.forEach((button) => {
+    button.classList.toggle(
+      "active",
+      button.dataset.usersView === usersDirectoryView,
+    );
+  });
+
+  usersDirectoryList.innerHTML = "";
+
+  if (!list.length) {
+    const empty = document.createElement("p");
+    empty.className = "users-directory-empty";
+    empty.textContent =
+      usersDirectoryView === "hub-users"
+        ? "Nenhum login cadastrado no Hub ainda."
+        : "Nenhum usuário do Discord sem login encontrado. Configure DISCORD_BOT_TOKEN no servidor para listar todos os membros.";
+    usersDirectoryList.append(empty);
+    return;
+  }
+
+  list.forEach((user) => {
+    const row = document.createElement("div");
+    row.className = "users-directory-row";
+    const avatar = document.createElement("span");
+    avatar.className = "users-directory-avatar";
+    if (user.avatarUrl) {
+      avatar.style.backgroundImage = `url("${user.avatarUrl}")`;
+      avatar.classList.add("has-image");
+    } else {
+      avatar.textContent = (user.username || "U").slice(0, 1).toUpperCase();
+    }
+
+    const copy = document.createElement("span");
+    const name = document.createElement("strong");
+    name.textContent = user.username || "Usuario";
+    const meta = document.createElement("small");
+    meta.textContent =
+      usersDirectoryView === "hub-users"
+        ? "Login cadastrado no Hub"
+        : "Discord sem login na plataforma";
+    copy.append(name, meta);
+    row.append(avatar, copy);
+    usersDirectoryList.append(row);
+  });
+}
+
+async function fetchUsersDirectory() {
+  const [hubResponse, discordResponse] = await Promise.all([
+    fetch(`${API_BASE}/api/users`),
+    fetch(`${API_BASE}/api/discord-users`),
+  ]);
+  const hubUsers = hubResponse.ok ? await hubResponse.json() : [];
+  const discordUsers = discordResponse.ok ? await discordResponse.json() : [];
+  const hubNames = new Set(
+    hubUsers.map((user) => normalizeDirectoryKey(user.username)),
+  );
+  const discordOnly = discordUsers.filter(
+    (user) => !hubNames.has(normalizeDirectoryKey(user.username)),
+  );
+
+  usersDirectoryData = {
+    hubUsers,
+    discordOnly,
+  };
+}
+
+async function openUsersDirectory() {
+  usersDirectoryOverlay?.classList.remove("hidden");
+  usersDirectoryList.innerHTML = "";
+  const loading = document.createElement("p");
+  loading.className = "users-directory-empty";
+  loading.textContent = "Carregando usuários...";
+  usersDirectoryList.append(loading);
+
+  try {
+    await fetchUsersDirectory();
+    renderUserDirectoryList();
+  } catch (error) {
+    console.warn("API users directory:", error.message);
+    usersDirectoryList.innerHTML = "";
+    const empty = document.createElement("p");
+    empty.className = "users-directory-empty";
+    empty.textContent = "Nao foi possivel carregar usuários agora.";
+    usersDirectoryList.append(empty);
+  }
+}
+
+function closeUsersDirectory() {
+  usersDirectoryOverlay?.classList.add("hidden");
+}
+
+async function saveDiscordBotToken(event) {
+  event.preventDefault();
+  const token = discordBotTokenInput?.value.trim() || "";
+  if (!token) {
+    showToast("Cole o token do bot Discord.");
+    return;
+  }
+
+  const button = discordTokenForm.querySelector("button");
+  if (button) button.disabled = true;
+  try {
+    const response = await fetch(`${API_BASE}/api/discord-token`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || "Nao foi possivel salvar.");
+    discordBotTokenInput.value = "";
+    showToast("Token salvo no servidor local.");
+    await fetchUsersDirectory();
+    usersDirectoryView = "discord-only";
+    renderUserDirectoryList();
+  } catch (error) {
+    console.warn("API discord-token:", error.message);
+    showToast("Nao foi possivel salvar o token no servidor local.");
+  } finally {
+    if (button) button.disabled = false;
+  }
 }
 
 async function handleAccountSubmit(event) {
@@ -2178,6 +2325,18 @@ topbarLogout?.addEventListener("click", logoutDiscord);
 notificationsButton?.addEventListener("click", () => {
   showToast("Nenhuma notificação nova.");
 });
+usersDirectoryButton?.addEventListener("click", openUsersDirectory);
+usersDirectoryClose?.addEventListener("click", closeUsersDirectory);
+usersDirectoryOverlay?.addEventListener("click", (event) => {
+  if (event.target === usersDirectoryOverlay) closeUsersDirectory();
+});
+usersDirectoryTabs.forEach((button) => {
+  button.addEventListener("click", () => {
+    usersDirectoryView = button.dataset.usersView;
+    renderUserDirectoryList();
+  });
+});
+discordTokenForm?.addEventListener("submit", saveDiscordBotToken);
 
 themeToggle.addEventListener("click", () => {
   document.body.classList.toggle("dark-mode");

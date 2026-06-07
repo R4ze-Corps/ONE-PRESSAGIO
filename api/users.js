@@ -29,8 +29,19 @@ function verifyPassword(password, stored) {
 
 export default async function handler(request, response) {
   try {
+    if (request.method === "GET") {
+      const db = await getDb();
+      const users = await db
+        .collection("users")
+        .find({})
+        .sort({ createdAt: -1 })
+        .toArray();
+      response.status(200).json(users.map(publicUser));
+      return;
+    }
+
     if (request.method !== "POST") {
-      response.setHeader("Allow", "POST");
+      response.setHeader("Allow", "GET, POST");
       response.status(405).json({ error: "Metodo nao permitido" });
       return;
     }
