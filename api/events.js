@@ -14,7 +14,7 @@ export default async function handler(request, response) {
         eventTime: body.eventTime || "",
         location: body.location || "",
         reward: body.reward || "",
-        status: "active",
+        status: body.status || "active",
         createdAt: new Date(),
       };
 

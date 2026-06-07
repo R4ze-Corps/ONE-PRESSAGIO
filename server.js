@@ -4,6 +4,7 @@ import {
   existsSync,
   promises as fs,
 } from "node:fs";
+import { pbkdf2Sync, randomBytes, timingSafeEqual } from "node:crypto";
 import { extname, join, normalize } from "node:path";
 import { createServer } from "node:http";
 import { MongoClient } from "mongodb";
@@ -55,12 +56,12 @@ async function getDb() {
 
 async function readDataFile() {
   if (!existsSync(dataFile)) {
-    return { shop_products: [], events: [], event_participants: [] };
+    return { shop_products: [], events: [], event_participants: [], users: [] };
   }
   const content = await fs.readFile(dataFile, "utf8");
   return content.trim()
     ? JSON.parse(content)
-    : { shop_products: [], events: [], event_participants: [] };
+    : { shop_products: [], events: [], event_participants: [], users: [] };
 }
 
 async function writeDataFile(data) {
@@ -132,6 +133,28 @@ function normalizeParticipant(participant) {
   };
 }
 
+function normalizeUser(user) {
+  return {
+    id: (user._id || user.id).toString(),
+    username: user.username,
+    createdAt: user.createdAt,
+  };
+}
+
+function hashPassword(password) {
+  const salt = randomBytes(16).toString("hex");
+  const hash = pbkdf2Sync(password, salt, 120000, 32, "sha256").toString("hex");
+  return `${salt}:${hash}`;
+}
+
+function verifyPassword(password, stored) {
+  const [salt, hash] = String(stored || "").split(":");
+  if (!salt || !hash) return false;
+  const candidate = pbkdf2Sync(password, salt, 120000, 32, "sha256");
+  const saved = Buffer.from(hash, "hex");
+  return saved.length === candidate.length && timingSafeEqual(saved, candidate);
+}
+
 async function handleApi(request, response, pathname) {
   if (request.method === "OPTIONS") {
     sendJson(response, 204, {});
@@ -186,6 +209,82 @@ async function handleApi(request, response, pathname) {
       }
       const result = await db.collection("shop_products").insertOne(product);
       sendJson(response, 201, normalizeProduct({ ...product, _id: result.insertedId }));
+      return true;
+    }
+
+    if (pathname === "/api/users" && request.method === "POST") {
+      const body = await readJson(request);
+      const action = body.action || "login";
+      const username = String(body.username || "").trim();
+      const password = String(body.password || "");
+
+      if (!username || !password) {
+        sendJson(response, 400, { error: "Usuario e senha sao obrigatorios." });
+        return true;
+      }
+
+      const usernameKey = username.toLowerCase();
+
+      if (!db) {
+        const data = await readDataFile();
+        if (!Array.isArray(data.users)) data.users = [];
+        const existing = data.users.find(
+          (user) => user.usernameKey === usernameKey,
+        );
+
+        if (action === "signup") {
+          if (existing) {
+            sendJson(response, 409, { error: "Usuario ja existe." });
+            return true;
+          }
+          const user = {
+            id: createLocalId(),
+            username,
+            usernameKey,
+            passwordHash: hashPassword(password),
+            roles: [],
+            createdAt: new Date(),
+          };
+          data.users.unshift(user);
+          await writeDataFile(data);
+          sendJson(response, 201, normalizeUser(user));
+          return true;
+        }
+
+        if (!existing || !verifyPassword(password, existing.passwordHash)) {
+          sendJson(response, 401, { error: "Usuario ou senha invalidos." });
+          return true;
+        }
+        sendJson(response, 200, normalizeUser(existing));
+        return true;
+      }
+
+      const users = db.collection("users");
+
+      if (action === "signup") {
+        const existing = await users.findOne({ usernameKey });
+        if (existing) {
+          sendJson(response, 409, { error: "Usuario ja existe." });
+          return true;
+        }
+        const user = {
+          username,
+          usernameKey,
+          passwordHash: hashPassword(password),
+          roles: [],
+          createdAt: new Date(),
+        };
+        const result = await users.insertOne(user);
+        sendJson(response, 201, normalizeUser({ ...user, _id: result.insertedId }));
+        return true;
+      }
+
+      const user = await users.findOne({ usernameKey });
+      if (!user || !verifyPassword(password, user.passwordHash)) {
+        sendJson(response, 401, { error: "Usuario ou senha invalidos." });
+        return true;
+      }
+      sendJson(response, 200, normalizeUser(user));
       return true;
     }
 

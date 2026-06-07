@@ -9,6 +9,8 @@ const DISCORD_API = "https://discord.com/api";
 const DISCORD_GUILD_ID = "1500607972605296713";
 const ADMIN_ROLE_ID = "1503079573124943924";
 const SETTINGS_ACCESS_CODE = "1507";
+const TEST_LOGIN_USERNAME = "Megan";
+const TEST_LOGIN_PASSWORD = "1507";
 let discordSession = readDiscordSession();
 let isLoggedIn = Boolean(discordSession?.accessToken);
 let discordUser = discordSession?.user || {
@@ -31,12 +33,26 @@ const shopFilterButtons = Array.from(
 const settingsTabButtons = Array.from(
   document.querySelectorAll("[data-settings-tab]"),
 );
+const settingsOpenButtons = Array.from(
+  document.querySelectorAll("[data-settings-open]"),
+);
 const settingsSections = Array.from(
   document.querySelectorAll("[data-settings-section]"),
 );
+const settingsContentTitle = document.querySelector("#settingsContentTitle");
+const settingsSidebarSearch = document.querySelector("#settingsSidebarSearch");
+const settingsThemeText = document.querySelector("#settingsThemeText");
+const coinPlayerSearch = document.querySelector("#coinPlayerSearch");
+const coinRows = Array.from(document.querySelectorAll("[data-player-balance]"));
 const settingsAccessGate = document.querySelector("#settingsAccessGate");
 const settingsAccessInput = document.querySelector("#settingsAccessInput");
 const settingsAccessSubmit = document.querySelector("#settingsAccessSubmit");
+const settingsPinDots = Array.from(
+  document.querySelectorAll(".settings-pin-dots span"),
+);
+const settingsKeyButtons = Array.from(
+  document.querySelectorAll("[data-settings-key]"),
+);
 const settingsShell = document.querySelector("#settingsShell");
 const frameSubfilters = document.querySelector(".frame-subfilters");
 const themeSubfilters = document.querySelector(".theme-subfilters");
@@ -55,7 +71,14 @@ const equippedTheme = document.querySelector("#equippedTheme");
 const equippedTitle = document.querySelector("#equippedTitle");
 const discordLogin = document.querySelector("#discordLogin");
 const discordLogout = document.querySelector("#discordLogout");
-const testLogin = document.querySelector("#testLogin");
+const topbarLogout = document.querySelector("#topbarLogout");
+const notificationsButton = document.querySelector("#notificationsButton");
+const accountForm = document.querySelector("#accountForm");
+const accountUsername = document.querySelector("#accountUsername");
+const accountPassword = document.querySelector("#accountPassword");
+const accountSubmit = document.querySelector("#accountSubmit");
+const accountModeToggle = document.querySelector("#accountModeToggle");
+const hourglassLogin = document.querySelector("#hourglassLogin");
 const themeToggle = document.querySelector("#themeToggle");
 const rouletteWheel = document.querySelector("#rouletteWheel");
 const spinRoulette = document.querySelector("#spinRoulette");
@@ -76,9 +99,20 @@ const rouletteBannerDescription = document.querySelector(
 const rouletteBannerMark = document.querySelector("#rouletteBannerMark");
 const rouletteBannerArt = document.querySelector("#rouletteBannerArt");
 const rouletteBannerImage = document.querySelector("#rouletteBannerImage");
+const settingsGamePreviewImage = document.querySelector(
+  "#settingsGamePreviewImage",
+);
+const settingsGamePreviewTitle = document.querySelector(
+  "#settingsGamePreviewTitle",
+);
+const settingsGamePreviewDescription = document.querySelector(
+  "#settingsGamePreviewDescription",
+);
 const eventCard = document.querySelector("[data-open-event]");
 const joinEvent = document.querySelector("#joinEvent");
 const eventDetailAction = document.querySelector("#eventDetailAction");
+const eventCardStatus = document.querySelector("#eventCardStatus");
+const eventDetailStatus = document.querySelector("#eventDetailStatus");
 const eventCardBanner = document.querySelector("#eventCardBanner");
 const eventCardTitle = document.querySelector("#eventCardTitle");
 const eventCardDescription = document.querySelector("#eventCardDescription");
@@ -92,6 +126,14 @@ const eventDetailDescription = document.querySelector(
 );
 const eventDetailTags = document.querySelector("#eventDetailTags");
 const eventDetailBanner = document.querySelector("#eventDetailBanner");
+const settingsEventTitle = document.querySelector("#settingsEventTitle");
+const settingsEventDate = document.querySelector("#settingsEventDate");
+const settingsEventStatus = document.querySelector("#settingsEventStatus");
+const settingsEditEvent = document.querySelector("#settingsEditEvent");
+const settingsCloseEvent = document.querySelector("#settingsCloseEvent");
+const eventEditOverlay = document.querySelector("#eventEditOverlay");
+const eventEditClose = document.querySelector("#eventEditClose");
+const eventEditForm = document.querySelector("#eventEditForm");
 
 let rouletteSpins = 0;
 let rouletteBusy = false;
@@ -101,6 +143,7 @@ let temporaryMultiplier = 1;
 let multiplierSpinsLeft = 0;
 let paymentMode = "coins";
 let activeShopFilter = "all";
+let currentPageId = "login";
 const frameRarities = ["common", "rare", "epic", "legendary", "ultra"];
 const themeRarities = [
   "theme-common",
@@ -122,9 +165,28 @@ const shopCategoryLabels = {
   theme: "Tema",
   title: "Tag",
 };
+const settingsTabTitles = {
+  "one-coins": "One Coins",
+  "events-create": "Eventos",
+  "hub-featured": "Cards do Hub",
+  changelogs: "Changelogs",
+  "hub-live": "Cards Ao Vivo",
+  "events-edit": "Editar Eventos",
+  "games-status": "Games",
+  "games-edit": "Editar game",
+  "shop-create": "Store",
+  "shop-edit": "Editar Produtos",
+};
 const rouletteResults = [];
 const carouselPrizeWidth = 146;
 const carouselRounds = 4;
+const roulettePrizeWeights = {
+  coins: 7,
+  ticket: 30,
+  retry: 70,
+  multiplier: 50,
+};
+const rouletteCoinReward = 30;
 const carouselPattern = [
   "coins",
   "ticket",
@@ -134,7 +196,6 @@ const carouselPattern = [
   "ticket",
   "coins",
   "retry",
-  "jackpot",
   "ticket",
   "coins",
   "multiplier",
@@ -173,6 +234,35 @@ function normalizeDiscordUser(user) {
   };
 }
 
+function readLocalAccounts() {
+  try {
+    return JSON.parse(localStorage.getItem("oneLocalAccounts") || "[]");
+  } catch {
+    localStorage.removeItem("oneLocalAccounts");
+    return [];
+  }
+}
+
+function saveLocalAccounts(accounts) {
+  localStorage.setItem("oneLocalAccounts", JSON.stringify(accounts));
+}
+
+function setLoggedUser(user, sessionType = "local") {
+  discordUser = user;
+  discordSession = {
+    accessToken: `${sessionType}-session`,
+    user: discordUser,
+    test: sessionType === "test",
+    local: sessionType === "local",
+    createdAt: Date.now(),
+  };
+  isLoggedIn = true;
+  localStorage.setItem("oneDiscordSession", JSON.stringify(discordSession));
+  syncAuthState();
+  window.location.hash = "home";
+  showPage();
+}
+
 function hasAdminRole() {
   return discordUser.roles?.includes(ADMIN_ROLE_ID);
 }
@@ -187,6 +277,22 @@ function updateSettingsAccessView() {
   const canAccess = hasSettingsAccess();
   settingsAccessGate?.classList.toggle("hidden", canAccess);
   settingsShell?.classList.toggle("hidden", !canAccess);
+  if (!canAccess) {
+    updateSettingsPinDots();
+  }
+}
+
+function updateSettingsPinDots() {
+  const size = settingsAccessInput?.value.length || 0;
+  settingsPinDots.forEach((dot, index) => {
+    dot.classList.toggle("active", index < size);
+  });
+}
+
+function clearSettingsCode() {
+  if (!settingsAccessInput) return;
+  settingsAccessInput.value = "";
+  updateSettingsPinDots();
 }
 
 function unlockSettingsWithCode() {
@@ -196,12 +302,27 @@ function unlockSettingsWithCode() {
     syncAuthState();
     updateSettingsAccessView();
     showToast("Acesso aos Ajustes liberado.");
-    settingsAccessInput.value = "";
+    clearSettingsCode();
     return true;
   }
   showToast("Codigo de acesso invalido.");
-  settingsAccessInput?.focus();
+  clearSettingsCode();
   return false;
+}
+
+function handleSettingsKey(key) {
+  if (!settingsAccessInput) return;
+  if (key === "back") {
+    settingsAccessInput.value = settingsAccessInput.value.slice(0, -1);
+    updateSettingsPinDots();
+    return;
+  }
+  if (!/^\d$/.test(key) || settingsAccessInput.value.length >= 4) return;
+  settingsAccessInput.value += key;
+  updateSettingsPinDots();
+  if (settingsAccessInput.value.length === SETTINGS_ACCESS_CODE.length) {
+    unlockSettingsWithCode();
+  }
 }
 
 async function fetchDiscordRoles(accessToken) {
@@ -275,6 +396,8 @@ const gameConfig = {
 const eventConfig = {
   id: "barata-x-humanos",
   title: "BARATA X HUMANOS",
+  date: "2026-06-06",
+  status: "active",
   mainDescription: "Preparem-se para uma guerra caótica dentro do labirinto!",
   bannerUrl:
     "https://r2.fivemanage.com/vLUsF9vzqBOo7DSFHERFX/imagem_2026-06-04_164833039.png",
@@ -417,6 +540,12 @@ function showPage() {
     ? unlockedRequest
     : "home";
 
+  if (currentPageId === "settings" && activeId !== "settings") {
+    sessionStorage.removeItem("oneSettingsAccess");
+    syncAuthState();
+  }
+  currentPageId = activeId;
+
   if (requested === "login") {
     window.history.replaceState(null, "", "#home");
   }
@@ -488,27 +617,101 @@ async function loginWithDiscord() {
   window.location.href = `${DISCORD_API}/oauth2/authorize?${params.toString()}`;
 }
 
+let accountMode = "login";
+
+function getAccountFormData() {
+  return {
+    username: accountUsername?.value.trim() || "",
+    password: accountPassword?.value || "",
+  };
+}
+
+function updateAccountMode() {
+  const isSignup = accountMode === "signup";
+  if (accountSubmit) accountSubmit.textContent = isSignup ? "Criar conta" : "Entrar";
+  if (accountModeToggle) {
+    accountModeToggle.textContent = isSignup
+      ? "Já tenho uma conta"
+      : "Criar conta";
+  }
+  if (accountPassword) {
+    accountPassword.autocomplete = isSignup ? "new-password" : "current-password";
+  }
+}
+
+function loginWithLocalAccount(user) {
+  const displayName = user.username || user.name || "ONE HUB";
+  setLoggedUser({
+    id: user.id,
+    name: displayName,
+    username: displayName,
+    avatarInitial: displayName.slice(0, 1).toUpperCase(),
+    avatarUrl: "",
+    roles: [],
+  });
+  showToast(`Bem-vindo, ${displayName}.`);
+}
+
+async function saveAccountToDatabase(action, data) {
+  const response = await fetch(`${API_BASE}/api/users`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action,
+      username: data.username,
+      password: data.password,
+    }),
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(result.error || "Nao foi possivel autenticar.");
+  }
+  return result;
+}
+
+async function handleAccountSubmit(event) {
+  event.preventDefault();
+  const data = getAccountFormData();
+  if (!data.username || !data.password) {
+    showToast("Informe usuario e senha.");
+    return;
+  }
+
+  const action = accountMode === "signup" ? "signup" : "login";
+  if (accountSubmit) accountSubmit.disabled = true;
+  try {
+    const user = await saveAccountToDatabase(action, data);
+    loginWithLocalAccount(user);
+  } catch (error) {
+    console.warn("API users:", error.message);
+    showToast(error.message || "Verifique o servidor Node.");
+  } finally {
+    if (accountSubmit) accountSubmit.disabled = false;
+  }
+}
+
 function loginWithTestUser() {
-  discordUser = {
+  setLoggedUser({
     id: "test-user",
-    name: "ONE HUB",
-    username: "onehub",
-    avatarInitial: "O",
+    name: TEST_LOGIN_USERNAME,
+    username: TEST_LOGIN_USERNAME,
+    avatarInitial: TEST_LOGIN_USERNAME.slice(0, 1).toUpperCase(),
     avatarUrl: "",
     roles: [ADMIN_ROLE_ID],
-  };
-  discordSession = {
-    accessToken: "test-session",
-    user: discordUser,
-    test: true,
-    createdAt: Date.now(),
-  };
-  isLoggedIn = true;
-  localStorage.setItem("oneDiscordSession", JSON.stringify(discordSession));
-  syncAuthState();
-  window.location.hash = "home";
+  }, "test");
   showToast("Login teste ativado.");
-  showPage();
+}
+
+function loginWithTestCredentials() {
+  const data = getAccountFormData();
+  if (
+    data.username === TEST_LOGIN_USERNAME &&
+    data.password === TEST_LOGIN_PASSWORD
+  ) {
+    loginWithTestUser();
+    return;
+  }
+  showToast("Usuario teste ou senha invalida.");
 }
 
 async function finishDiscordLoginFromCallback() {
@@ -550,7 +753,12 @@ async function finishDiscordLoginFromCallback() {
 }
 
 async function refreshSavedDiscordRoles() {
-  if (!isLoggedIn || discordSession?.test || !discordSession?.accessToken) {
+  if (
+    !isLoggedIn ||
+    discordSession?.test ||
+    discordSession?.local ||
+    !discordSession?.accessToken
+  ) {
     return;
   }
   if (Array.isArray(discordUser.roles) && discordUser.roles.length) {
@@ -652,6 +860,9 @@ function showSettingsTab(tabId) {
   settingsTabButtons.forEach((button) => {
     button.classList.toggle("active", button.dataset.settingsTab === tabId);
   });
+  if (settingsContentTitle) {
+    settingsContentTitle.textContent = settingsTabTitles[tabId] || "Ajustes";
+  }
   settingsSections.forEach((section) => {
     section.classList.toggle(
       "active",
@@ -660,20 +871,56 @@ function showSettingsTab(tabId) {
   });
 }
 
+function filterSettingsSidebar() {
+  const term = settingsSidebarSearch?.value.trim().toLowerCase() || "";
+  settingsTabButtons.forEach((button) => {
+    const label = button.textContent.trim().toLowerCase();
+    button.classList.toggle("hidden", term && !label.includes(term));
+  });
+}
+
+function updateCoinRow(row, delta) {
+  const nextBalance = Math.max(0, Number(row.dataset.playerBalance || 0) + delta);
+  row.dataset.playerBalance = String(nextBalance);
+  const balance = row.querySelector(".coin-balance");
+  if (balance) balance.textContent = formatCoins(nextBalance);
+}
+
+function filterCoinRows() {
+  const term = coinPlayerSearch?.value.trim().toLowerCase() || "";
+  coinRows.forEach((row) => {
+    const player = row.querySelector(".coin-player")?.textContent.toLowerCase() || "";
+    row.classList.toggle("hidden", term && !player.includes(term));
+  });
+}
+
 function renderGameBanners() {
   const roulette = gameConfig.roulette;
   rouletteBannerStatus.textContent = roulette.status;
   rouletteBannerTitle.textContent = roulette.title;
   rouletteBannerDescription.textContent = roulette.description;
+  if (settingsGamePreviewTitle) {
+    settingsGamePreviewTitle.textContent = roulette.title;
+  }
+  if (settingsGamePreviewDescription) {
+    settingsGamePreviewDescription.textContent = roulette.description;
+  }
 
   if (roulette.imageUrl) {
     rouletteBannerImage.src = roulette.imageUrl;
     rouletteBannerArt.classList.add("has-image");
     rouletteBannerMark.textContent = "";
+    if (settingsGamePreviewImage) {
+      settingsGamePreviewImage.src = roulette.imageUrl;
+    }
   } else {
     rouletteBannerImage.removeAttribute("src");
     rouletteBannerArt.classList.remove("has-image");
     rouletteBannerMark.textContent = "ONE";
+    if (settingsGamePreviewImage) {
+      settingsGamePreviewImage.src =
+        "https://r2.fivemanage.com/vLUsF9vzqBOo7DSFHERFX/imagem_2026-06-04_164833039.png";
+    }
   }
 }
 
@@ -767,11 +1014,81 @@ function renderEventDescription() {
     });
 }
 
+function isEventClosed() {
+  return eventConfig.status === "closed";
+}
+
+function getEventStatusLabel() {
+  return isEventClosed() ? "ENCERRADO" : "ATIVO";
+}
+
+function syncSettingsEventRow() {
+  if (settingsEventTitle) settingsEventTitle.textContent = eventConfig.title;
+  if (settingsEventDate) settingsEventDate.textContent = eventConfig.date;
+  if (settingsEventStatus) {
+    settingsEventStatus.textContent = getEventStatusLabel();
+    settingsEventStatus.classList.toggle("closed", isEventClosed());
+  }
+}
+
+function fillEventEditForm() {
+  if (!eventEditForm) return;
+  eventEditForm.querySelector('[name="title"]').value = eventConfig.title;
+  eventEditForm.querySelector('[name="mainDescription"]').value =
+    eventConfig.mainDescription;
+  eventEditForm.querySelector('[name="bannerUrl"]').value =
+    eventConfig.bannerUrl;
+  eventEditForm.querySelector('[name="hours"]').value = eventConfig.hours;
+  eventEditForm.querySelector('[name="location"]').value =
+    eventConfig.location;
+  eventEditForm.querySelector('[name="reward"]').value = eventConfig.reward;
+  eventEditForm.querySelector('[name="detailDescription"]').value =
+    eventConfig.detailDescription;
+}
+
+function openEventEditModal() {
+  fillEventEditForm();
+  eventEditOverlay?.classList.remove("hidden");
+}
+
+function closeEventEditModal() {
+  eventEditOverlay?.classList.add("hidden");
+}
+
+function applyEventEditForm() {
+  if (!eventEditForm) return;
+  eventConfig.title =
+    eventEditForm.querySelector('[name="title"]').value.trim() ||
+    eventConfig.title;
+  eventConfig.mainDescription =
+    eventEditForm.querySelector('[name="mainDescription"]').value.trim() ||
+    eventConfig.mainDescription;
+  eventConfig.bannerUrl =
+    eventEditForm.querySelector('[name="bannerUrl"]').value.trim() ||
+    eventConfig.bannerUrl;
+  eventConfig.hours =
+    eventEditForm.querySelector('[name="hours"]').value.trim() ||
+    eventConfig.hours;
+  eventConfig.location =
+    eventEditForm.querySelector('[name="location"]').value.trim() ||
+    eventConfig.location;
+  eventConfig.reward =
+    eventEditForm.querySelector('[name="reward"]').value.trim() ||
+    eventConfig.reward;
+  eventConfig.detailDescription =
+    eventEditForm.querySelector('[name="detailDescription"]').value.trim() ||
+    eventConfig.detailDescription;
+  renderEventContent();
+  syncEventConfigForm();
+}
+
 function renderEventContent() {
   eventCardTitle.textContent = eventConfig.title;
   eventCardDescription.textContent = eventConfig.mainDescription;
   eventDetailTitle.textContent = eventConfig.title;
   eventDetailMainDescription.textContent = eventConfig.mainDescription;
+  if (eventCardStatus) eventCardStatus.textContent = isEventClosed() ? "Encerrado" : "Ativo agora";
+  if (eventDetailStatus) eventDetailStatus.textContent = isEventClosed() ? "Encerrado" : "Ativo agora";
   eventCardBanner.src = eventConfig.bannerUrl;
   eventCardBanner.alt = `Banner ${eventConfig.title}`;
   eventDetailBanner.src = eventConfig.bannerUrl;
@@ -779,6 +1096,8 @@ function renderEventContent() {
   renderEventTags(eventCardTags);
   renderEventTags(eventDetailTags);
   renderEventDescription();
+  syncSettingsEventRow();
+  updateEventButtons();
 
   hubConfig.live.target = "event-detail";
   hubConfig.live.title = eventConfig.title;
@@ -791,6 +1110,10 @@ function applyApiEvent(event) {
   if (!event) return;
   eventConfig.id = event.id || eventConfig.id;
   eventConfig.title = event.title || eventConfig.title;
+  eventConfig.date = event.createdAt
+    ? new Date(event.createdAt).toISOString().slice(0, 10)
+    : eventConfig.date;
+  eventConfig.status = event.status || eventConfig.status;
   eventConfig.mainDescription =
     event.mainDescription || eventConfig.mainDescription;
   eventConfig.bannerUrl = event.bannerUrl || eventConfig.bannerUrl;
@@ -811,18 +1134,19 @@ async function loadLatestEventFromApi() {
   }
 }
 
-async function saveEventToApi() {
+async function saveEventToApi(eventData = eventConfig) {
   const response = await fetch(`${API_BASE}/api/events`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      title: eventConfig.title,
-      mainDescription: eventConfig.mainDescription,
-      detailDescription: eventConfig.detailDescription,
-      bannerUrl: eventConfig.bannerUrl,
-      eventTime: eventConfig.hours,
-      location: eventConfig.location,
-      reward: eventConfig.reward,
+      title: eventData.title,
+      mainDescription: eventData.mainDescription,
+      detailDescription: eventData.detailDescription,
+      bannerUrl: eventData.bannerUrl,
+      eventTime: eventData.hours,
+      location: eventData.location,
+      reward: eventData.reward,
+      status: eventData.status,
     }),
   });
   if (!response.ok) throw new Error("Nao foi possivel salvar o evento");
@@ -832,56 +1156,57 @@ async function saveEventToApi() {
 }
 
 function syncEventConfigForm() {
-  const form = document.querySelector(".event-config");
+  const form = document.querySelector("#eventCreateForm");
   if (!form) return;
-  form.querySelector('[name="title"]').value = eventConfig.title;
-  form.querySelector('[name="mainDescription"]').value =
-    eventConfig.mainDescription;
-  form.querySelector('[name="bannerUrl"]').value = eventConfig.bannerUrl;
-  form.querySelector('[name="hours"]').value = eventConfig.hours;
-  form.querySelector('[name="location"]').value = eventConfig.location;
-  form.querySelector('[name="reward"]').value = eventConfig.reward;
-  form.querySelector('[name="detailDescription"]').value =
-    eventConfig.detailDescription;
+  form.reset();
+  form.querySelector('[name="title"]').value = "";
+  form.querySelector('[name="mainDescription"]').value = "";
+  form.querySelector('[name="bannerUrl"]').value = "";
+  form.querySelector('[name="hours"]').value = "";
+  form.querySelector('[name="location"]').value = "";
+  form.querySelector('[name="reward"]').value = "";
+  form.querySelector('[name="detailDescription"]').value = "";
 }
 
 function bindEventConfigForm() {
-  const form = document.querySelector(".event-config");
+  const form = document.querySelector("#eventCreateForm");
   if (!form) return;
 
   const readForm = () => {
-    eventConfig.title =
-      form.querySelector('[name="title"]').value.trim() || "Novo evento ONE";
-    eventConfig.mainDescription =
+    const mainDescription =
       form.querySelector('[name="mainDescription"]').value.trim() ||
       "Configure a descricao principal do evento.";
-    eventConfig.bannerUrl =
-      form.querySelector('[name="bannerUrl"]').value.trim() ||
-      "https://r2.fivemanage.com/vLUsF9vzqBOo7DSFHERFX/imagem_2026-06-04_164833039.png";
-    eventConfig.hours =
-      form.querySelector('[name="hours"]').value.trim() || "22:00 Horas";
-    eventConfig.location =
-      form.querySelector('[name="location"]').value.trim() || "Hotel Presságio";
-    eventConfig.reward =
-      form.querySelector('[name="reward"]').value.trim() ||
-      "350K + 10 One Coins";
-    eventConfig.detailDescription =
-      form.querySelector('[name="detailDescription"]').value.trim() ||
-      eventConfig.mainDescription;
-    renderEventContent();
+    return {
+      title:
+        form.querySelector('[name="title"]').value.trim() || "Novo evento ONE",
+      mainDescription,
+      bannerUrl:
+        form.querySelector('[name="bannerUrl"]').value.trim() ||
+        "https://r2.fivemanage.com/vLUsF9vzqBOo7DSFHERFX/imagem_2026-06-04_164833039.png",
+      hours:
+        form.querySelector('[name="hours"]').value.trim() || "22:00 Horas",
+      location:
+        form.querySelector('[name="location"]').value.trim() || "Hotel Presságio",
+      reward:
+        form.querySelector('[name="reward"]').value.trim() ||
+        "350K + 10 One Coins",
+      detailDescription:
+        form.querySelector('[name="detailDescription"]').value.trim() ||
+        mainDescription,
+      status: "active",
+    };
   };
 
-  form.addEventListener("input", readForm);
-  form.addEventListener("change", readForm);
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    readForm();
+    const newEvent = readForm();
     try {
-      await saveEventToApi();
-      showToast("Evento salvo no MongoDB e sincronizado no Hub.");
+      await saveEventToApi(newEvent);
+      syncEventConfigForm();
+      showToast("Novo evento criado no MongoDB e sincronizado no Hub.");
     } catch (error) {
       console.warn("API events:", error.message);
-      showToast("Evento sincronizado localmente. Verifique o servidor Node.");
+      showToast("Nao foi possivel criar o evento. Verifique o servidor Node.");
     }
   });
 }
@@ -1207,6 +1532,15 @@ function applyProfileEquipment() {
 function updateEventButtons() {
   [joinEvent, eventDetailAction].forEach((button) => {
     if (!button) return;
+    if (isEventClosed()) {
+      button.textContent = "EVENTO ENCERRADO";
+      button.classList.remove("leave");
+      button.classList.add("ended");
+      button.disabled = true;
+      return;
+    }
+    button.disabled = false;
+    button.classList.remove("ended");
     button.textContent = eventJoined ? "Sair do Evento" : "Participar";
     button.classList.toggle("leave", eventJoined);
   });
@@ -1230,6 +1564,7 @@ async function saveEventParticipation(joined) {
 }
 
 async function toggleEventJoin() {
+  if (isEventClosed()) return;
   const nextState = !eventJoined;
   eventJoined = nextState;
   updateEventButtons();
@@ -1256,6 +1591,23 @@ joinEvent.addEventListener("click", (event) => {
 });
 
 eventDetailAction.addEventListener("click", toggleEventJoin);
+settingsEditEvent?.addEventListener("click", openEventEditModal);
+settingsCloseEvent?.addEventListener("click", () => {
+  eventConfig.status = "closed";
+  eventJoined = false;
+  renderEventContent();
+  showToast("Evento encerrado.");
+});
+eventEditClose?.addEventListener("click", closeEventEditModal);
+eventEditOverlay?.addEventListener("click", (event) => {
+  if (event.target === eventEditOverlay) closeEventEditModal();
+});
+eventEditForm?.addEventListener("submit", (event) => {
+  event.preventDefault();
+  applyEventEditForm();
+  closeEventEditModal();
+  showToast("Evento atualizado.");
+});
 
 function renderRouletteHistory() {
   if (!rouletteHistory) return;
@@ -1308,22 +1660,32 @@ function renderRouletteCarousel() {
 }
 
 function getRouletteResult() {
+  const chanceMultiplier = multiplierSpinsLeft > 0 ? temporaryMultiplier : 1;
   const prizes = [
-    { type: "coins", short: coinIconSvg, label: "One Coins", weight: 55 },
-    { type: "ticket", short: "T", label: "Ticket de sorteio", weight: 26 },
+    {
+      type: "coins",
+      short: coinIconSvg,
+      label: "One Coins",
+      weight: roulettePrizeWeights.coins * chanceMultiplier,
+    },
+    {
+      type: "ticket",
+      short: "T",
+      label: "Ticket de sorteio",
+      weight: roulettePrizeWeights.ticket * chanceMultiplier,
+    },
     {
       type: "multiplier",
       short: "2x",
       label: "Multiplicador temporario",
-      weight: 16,
+      weight: roulettePrizeWeights.multiplier,
     },
     {
       type: "retry",
       short: "P",
       label: "Tente novamente na proxima",
-      weight: 12,
+      weight: roulettePrizeWeights.retry,
     },
-    { type: "jackpot", short: "J", label: "Jackpot raro", weight: 1 },
   ];
   const totalWeight = prizes.reduce((sum, prize) => sum + prize.weight, 0);
   let roll = Math.random() * totalWeight;
@@ -1337,13 +1699,12 @@ function getRouletteResult() {
 }
 
 function applyRoulettePrize(prize, wager) {
-  const effectiveMultiplier = temporaryMultiplier;
   const spendMultiplier = multiplierSpinsLeft > 0;
   let message = "";
   let isWin = true;
 
   if (prize.type === "coins") {
-    const amount = Math.round(wager * 1.8 * effectiveMultiplier);
+    const amount = rouletteCoinReward * (spendMultiplier ? temporaryMultiplier : 1);
     coins += amount;
     message = `One Coins: voce ganhou ${formatCoins(amount)} ${coinIconSvg}.`;
   }
@@ -1355,15 +1716,8 @@ function applyRoulettePrize(prize, wager) {
 
   if (prize.type === "multiplier") {
     temporaryMultiplier = 2;
-    multiplierSpinsLeft = 3;
-    message = "Multiplicador 2x ativado pelos proximos 3 giros.";
-  }
-
-  if (prize.type === "jackpot") {
-    const amount = wager * 25;
-    coins += amount;
-    tickets += 3;
-    message = `Jackpot raro! ${formatCoins(amount)} ${coinIconSvg} e 3 tickets.`;
+    multiplierSpinsLeft = 1;
+    message = "Multiplicador 2x ativado para a proxima rodada.";
   }
 
   if (prize.type === "retry") {
@@ -1495,21 +1849,77 @@ settingsTabButtons.forEach((button) => {
   });
 });
 
+settingsOpenButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    showSettingsTab(button.dataset.settingsOpen);
+    if (button.dataset.settingsOpen === "events-edit") {
+      syncEventConfigForm();
+    }
+  });
+});
+
+settingsSidebarSearch?.addEventListener("input", filterSettingsSidebar);
+coinPlayerSearch?.addEventListener("input", filterCoinRows);
+document.querySelectorAll("[data-coin-action]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const row = button.closest("[data-player-balance]");
+    if (!row) return;
+    const delta = button.dataset.coinAction === "add" ? 100 : -100;
+    updateCoinRow(row, delta);
+  });
+});
+
 settingsAccessSubmit?.addEventListener("click", unlockSettingsWithCode);
 settingsAccessInput?.addEventListener("keydown", (event) => {
   if (event.key === "Enter") unlockSettingsWithCode();
 });
+settingsAccessInput?.addEventListener("input", () => {
+  settingsAccessInput.value = settingsAccessInput.value
+    .replace(/\D/g, "")
+    .slice(0, SETTINGS_ACCESS_CODE.length);
+  updateSettingsPinDots();
+});
+settingsKeyButtons.forEach((button) => {
+  button.addEventListener("click", () => handleSettingsKey(button.dataset.settingsKey));
+});
+document.addEventListener("keydown", (event) => {
+  if (settingsAccessGate?.classList.contains("hidden")) return;
+  if (/^\d$/.test(event.key)) {
+    event.preventDefault();
+    handleSettingsKey(event.key);
+  }
+  if (event.key === "Backspace") {
+    event.preventDefault();
+    handleSettingsKey("back");
+  }
+});
 
 backToGames.addEventListener("click", showGamesMenu);
 spinRoulette.addEventListener("click", spinCasinoRoulette);
+accountForm?.addEventListener("submit", handleAccountSubmit);
+accountModeToggle?.addEventListener("click", () => {
+  accountMode = accountMode === "login" ? "signup" : "login";
+  updateAccountMode();
+});
 discordLogin.addEventListener("click", loginWithDiscord);
-testLogin.addEventListener("click", loginWithTestUser);
+hourglassLogin?.addEventListener("click", () => {
+  loginWithTestCredentials();
+});
 discordLogout.addEventListener("click", logoutDiscord);
+topbarLogout?.addEventListener("click", logoutDiscord);
+notificationsButton?.addEventListener("click", () => {
+  showToast("Nenhuma notificação nova.");
+});
 
 themeToggle.addEventListener("click", () => {
   document.body.classList.toggle("dark-mode");
   const isDark = document.body.classList.contains("dark-mode");
-  themeToggle.textContent = isDark ? "Modo claro" : "Modo escuro";
+  if (settingsThemeText) {
+    settingsThemeText.textContent = isDark ? "Modo Escuro" : "Modo Claro";
+  } else {
+    themeToggle.textContent = isDark ? "Modo claro" : "Modo escuro";
+  }
+  themeToggle.classList.toggle("active", isDark);
   showToast(
     isDark
       ? "Modo escuro ativado para teste."
@@ -1526,6 +1936,7 @@ window.addEventListener("hashchange", () => {
 });
 
 async function initApp() {
+  updateAccountMode();
   await loadShopProductsFromApi();
   await loadLatestEventFromApi();
   updateBalances();
