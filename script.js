@@ -99,6 +99,9 @@ const accountSubmit = document.querySelector("#accountSubmit");
 const accountModeToggle = document.querySelector("#accountModeToggle");
 const hourglassLogin = document.querySelector("#hourglassLogin");
 const themeToggle = document.querySelector("#themeToggle");
+const globalThemeButtons = Array.from(
+  document.querySelectorAll("[data-global-theme]"),
+);
 const rouletteWheel = document.querySelector("#rouletteWheel");
 const spinRoulette = document.querySelector("#spinRoulette");
 const rouletteFeedback = document.querySelector("#rouletteFeedback");
@@ -168,6 +171,7 @@ let usersDirectoryData = {
   hubUsers: [],
 };
 let hubCoinUsers = [];
+let globalTheme = "default";
 const frameRarities = ["common", "rare", "epic", "legendary", "ultra"];
 const themeRarities = [
   "theme-common",
@@ -193,6 +197,7 @@ const settingsTabTitles = {
   "one-coins": "One Coins",
   "events-create": "Eventos",
   "hub-featured": "Cards do Hub",
+  themes: "Temas",
   changelogs: "Changelogs",
   "hub-live": "Cards Ao Vivo",
   "events-edit": "Editar Eventos",
@@ -1099,6 +1104,52 @@ function showSettingsTab(tabId) {
       section.dataset.settingsSection === tabId,
     );
   });
+}
+
+const globalThemeClasses = [
+  "hub-theme-blueprint",
+  "hub-theme-midnight",
+  "hub-theme-hello-kit",
+  "hub-theme-cartas-megan",
+];
+
+function applyGlobalTheme(theme = "default") {
+  globalTheme = theme || "default";
+  document.body.classList.remove(...globalThemeClasses);
+  if (globalTheme !== "default") {
+    document.body.classList.add(`hub-theme-${globalTheme}`);
+  }
+  globalThemeButtons.forEach((button) => {
+    button.classList.toggle("active", button.dataset.globalTheme === globalTheme);
+  });
+}
+
+async function loadGlobalThemeFromApi() {
+  try {
+    const response = await fetch(`${API_BASE}/api/site-settings?key=globalTheme`);
+    if (!response.ok) throw new Error("Tema indisponivel");
+    const setting = await response.json();
+    applyGlobalTheme(setting?.value || "default");
+  } catch (error) {
+    console.warn("API site-settings:", error.message);
+    applyGlobalTheme(globalTheme);
+  }
+}
+
+async function saveGlobalTheme(theme) {
+  applyGlobalTheme(theme);
+  try {
+    const response = await fetch(`${API_BASE}/api/site-settings`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: "globalTheme", value: theme }),
+    });
+    if (!response.ok) throw new Error("Nao foi possivel salvar tema");
+    showToast("Tema global salvo no banco de dados.");
+  } catch (error) {
+    console.warn("API site-settings:", error.message);
+    showToast("Nao foi possivel salvar o tema global.");
+  }
 }
 
 function filterSettingsSidebar() {
@@ -2167,7 +2218,6 @@ function applyProfileEquipment() {
     "theme-midnight",
     "theme-hello-kit",
   );
-  document.body.classList.remove("hub-theme-hello-kit");
 
   if (equipped.frame) {
     profileAvatar.classList.add(equipped.frame.effect);
@@ -2176,8 +2226,6 @@ function applyProfileEquipment() {
   }
   if (equipped.theme) {
     profileCard.classList.add(`theme-${equipped.theme.effect}`);
-    if (equipped.theme.appliesGlobalPalette)
-      document.body.classList.add(`hub-theme-${equipped.theme.effect}`);
   }
   profileTitle.textContent = equipped.title?.effect || "Novato";
   if (equippedFrame)
@@ -2506,6 +2554,11 @@ settingsOpenButtons.forEach((button) => {
 });
 
 settingsSidebarSearch?.addEventListener("input", filterSettingsSidebar);
+globalThemeButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    saveGlobalTheme(button.dataset.globalTheme || "default");
+  });
+});
 coinPlayerSearch?.addEventListener("input", filterCoinRows);
 
 settingsAccessSubmit?.addEventListener("click", unlockSettingsWithCode);
@@ -2598,6 +2651,7 @@ window.addEventListener("hashchange", () => {
 
 async function initApp() {
   updateAccountMode();
+  await loadGlobalThemeFromApi();
   await loadShopProductsFromApi();
   await loadHubCoinUsers();
   await loadEventsFromApi({ selectLatest: true });

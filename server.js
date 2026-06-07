@@ -311,6 +311,56 @@ async function handleApi(request, response, pathname) {
       return true;
     }
 
+    if (pathname === "/api/site-settings" && request.method === "GET") {
+      const url = new URL(request.url, `http://localhost:${port}`);
+      const key = url.searchParams.get("key") || "globalTheme";
+      if (!db) {
+        const data = await readDataFile();
+        sendJson(response, 200, {
+          key,
+          value: data.settings?.[key] || "default",
+          updatedAt: data.settings?.updatedAt || null,
+        });
+        return true;
+      }
+      const setting = await db.collection("site_settings").findOne({ key });
+      sendJson(response, 200, {
+        key,
+        value: setting?.value || "default",
+        updatedAt: setting?.updatedAt || null,
+      });
+      return true;
+    }
+
+    if (pathname === "/api/site-settings" && request.method === "POST") {
+      const body = await readJson(request);
+      const key = body.key || "globalTheme";
+      const value = body.value || "default";
+      const updatedAt = new Date();
+      if (!db) {
+        const data = await readDataFile();
+        data.settings = {
+          ...(data.settings || {}),
+          [key]: value,
+          updatedAt,
+        };
+        await writeDataFile(data);
+        sendJson(response, 200, { key, value, updatedAt });
+        return true;
+      }
+      const result = await db.collection("site_settings").findOneAndUpdate(
+        { key },
+        { $set: { key, value, updatedAt } },
+        { upsert: true, returnDocument: "after" },
+      );
+      sendJson(response, 200, {
+        key,
+        value: result?.value || value,
+        updatedAt: result?.updatedAt || updatedAt,
+      });
+      return true;
+    }
+
     if (pathname === "/api/users" && request.method === "POST") {
       const body = await readJson(request);
       const action = body.action || "login";
