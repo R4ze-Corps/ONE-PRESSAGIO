@@ -841,7 +841,11 @@ async function saveDiscordBotToken(event) {
     const result = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(result.error || "Nao foi possivel salvar.");
     discordBotTokenInput.value = "";
-    showToast("Token salvo no servidor local.");
+    showToast(
+      result.configured
+        ? "Token já configurado na Vercel. Recarregando diretório."
+        : "Token salvo no servidor local.",
+    );
     await refreshUsersDirectory();
     usersDirectoryView = "discord-only";
     renderUsersDirectoryTabs();
@@ -1111,12 +1115,12 @@ function renderHubCoinUsers() {
     add.className = "coin-add";
     add.type = "button";
     add.textContent = "+ Adicionar";
-    add.addEventListener("click", () => updateUserCoins(user.id, 100));
+    add.addEventListener("click", () => askCoinAmount(user, "add"));
     const remove = document.createElement("button");
     remove.className = "coin-remove";
     remove.type = "button";
     remove.textContent = "- Remover";
-    remove.addEventListener("click", () => updateUserCoins(user.id, -100));
+    remove.addEventListener("click", () => askCoinAmount(user, "remove"));
     actions.append(add, remove);
 
     row.append(player, balance, actions);
@@ -1140,6 +1144,23 @@ async function loadHubCoinUsers() {
     hubCoinUsers = [];
     renderHubCoinUsers();
   }
+}
+
+function askCoinAmount(user, action) {
+  const actionLabel = action === "add" ? "adicionar" : "remover";
+  const value = window.prompt(
+    `Informe quantos ONE COINS deseja ${actionLabel} para ${user.username}:`,
+    "100",
+  );
+  if (value === null) return;
+
+  const amount = Math.floor(Number(value));
+  if (!Number.isFinite(amount) || amount <= 0) {
+    showToast("Informe um valor maior que zero.");
+    return;
+  }
+
+  updateUserCoins(user.id, action === "add" ? amount : -amount);
 }
 
 async function updateUserCoins(userId, delta) {
