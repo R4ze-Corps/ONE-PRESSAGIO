@@ -3,7 +3,7 @@
 const API_BASE =
   window.location.protocol === "file:" ? "http://127.0.0.1:3000" : "";
 
-let coins = 1250;
+let coins = 0;
 const DISCORD_CLIENT_ID = "1507207436665229322";
 const DISCORD_API = "https://discord.com/api";
 const DISCORD_GUILD_ID = "1500607972605296713";
@@ -43,7 +43,7 @@ const settingsContentTitle = document.querySelector("#settingsContentTitle");
 const settingsSidebarSearch = document.querySelector("#settingsSidebarSearch");
 const settingsThemeText = document.querySelector("#settingsThemeText");
 const coinPlayerSearch = document.querySelector("#coinPlayerSearch");
-const coinRows = Array.from(document.querySelectorAll("[data-player-balance]"));
+const hubCoinRows = document.querySelector("#hubCoinRows");
 const settingsAccessGate = document.querySelector("#settingsAccessGate");
 const settingsAccessInput = document.querySelector("#settingsAccessInput");
 const settingsAccessSubmit = document.querySelector("#settingsAccessSubmit");
@@ -76,10 +76,20 @@ const notificationsButton = document.querySelector("#notificationsButton");
 const usersDirectoryButton = document.querySelector("#usersDirectoryButton");
 const usersDirectoryOverlay = document.querySelector("#usersDirectoryOverlay");
 const usersDirectoryClose = document.querySelector("#usersDirectoryClose");
-const usersDirectoryList = document.querySelector("#usersDirectoryList");
 const usersDirectoryTabs = Array.from(
   document.querySelectorAll("[data-users-view]"),
 );
+const usersDirectorySidebar = document.querySelector("#usersDirectorySidebar");
+const directoryDiscordCount = document.querySelector("#directoryDiscordCount");
+const directoryHubCount = document.querySelector("#directoryHubCount");
+const directoryDiscordOnlyTotal = document.querySelector(
+  "#directoryDiscordOnlyTotal",
+);
+const directoryHubUsersTotal = document.querySelector("#directoryHubUsersTotal");
+const directoryDiscordOnlyList = document.querySelector(
+  "#directoryDiscordOnlyList",
+);
+const directoryHubUsersList = document.querySelector("#directoryHubUsersList");
 const discordTokenForm = document.querySelector("#discordTokenForm");
 const discordBotTokenInput = document.querySelector("#discordBotTokenInput");
 const accountForm = document.querySelector("#accountForm");
@@ -157,6 +167,7 @@ let usersDirectoryData = {
   discordOnly: [],
   hubUsers: [],
 };
+let hubCoinUsers = [];
 const frameRarities = ["common", "rare", "epic", "legendary", "ultra"];
 const themeRarities = [
   "theme-common",
@@ -261,6 +272,7 @@ function saveLocalAccounts(accounts) {
 }
 
 function setLoggedUser(user, sessionType = "local") {
+  coins = Number(user.coins) || 0;
   discordUser = user;
   discordSession = {
     accessToken: `${sessionType}-session`,
@@ -272,6 +284,7 @@ function setLoggedUser(user, sessionType = "local") {
   isLoggedIn = true;
   localStorage.setItem("oneDiscordSession", JSON.stringify(discordSession));
   syncAuthState();
+  updateBalances();
   window.location.hash = "home";
   showPage();
 }
@@ -579,6 +592,7 @@ function showPage() {
   if (activeId === "profile") renderInventory();
   if (activeId === "settings") {
     updateSettingsAccessView();
+    loadHubCoinUsers();
     syncSettingsForms();
     syncGameConfigForms();
     syncEventConfigForm();
@@ -663,6 +677,7 @@ function loginWithLocalAccount(user) {
     avatarInitial: displayName.slice(0, 1).toUpperCase(),
     avatarUrl: "",
     roles: [],
+    coins: Number(user.coins) || 0,
   });
   showToast(`Bem-vindo, ${displayName}.`);
 }
@@ -688,38 +703,31 @@ function normalizeDirectoryKey(value) {
   return String(value || "").trim().toLowerCase();
 }
 
-function renderUserDirectoryList() {
-  if (!usersDirectoryList) return;
-  const list =
-    usersDirectoryView === "hub-users"
-      ? usersDirectoryData.hubUsers
-      : usersDirectoryData.discordOnly;
-
+function renderUsersDirectoryTabs() {
   usersDirectoryTabs.forEach((button) => {
     button.classList.toggle(
       "active",
       button.dataset.usersView === usersDirectoryView,
     );
   });
+}
 
-  usersDirectoryList.innerHTML = "";
-
+function renderDirectoryGroup(container, list, emptyText, type) {
+  if (!container) return;
+  container.innerHTML = "";
   if (!list.length) {
     const empty = document.createElement("p");
-    empty.className = "users-directory-empty";
-    empty.textContent =
-      usersDirectoryView === "hub-users"
-        ? "Nenhum login cadastrado no Hub ainda."
-        : "Nenhum usuário do Discord sem login encontrado. Configure DISCORD_BOT_TOKEN no servidor para listar todos os membros.";
-    usersDirectoryList.append(empty);
+    empty.className = "directory-empty";
+    empty.textContent = emptyText;
+    container.append(empty);
     return;
   }
 
   list.forEach((user) => {
     const row = document.createElement("div");
-    row.className = "users-directory-row";
+    row.className = "directory-member-row";
     const avatar = document.createElement("span");
-    avatar.className = "users-directory-avatar";
+    avatar.className = "directory-member-avatar";
     if (user.avatarUrl) {
       avatar.style.backgroundImage = `url("${user.avatarUrl}")`;
       avatar.classList.add("has-image");
@@ -732,13 +740,34 @@ function renderUserDirectoryList() {
     name.textContent = user.username || "Usuario";
     const meta = document.createElement("small");
     meta.textContent =
-      usersDirectoryView === "hub-users"
-        ? "Login cadastrado no Hub"
-        : "Discord sem login na plataforma";
+      type === "hub" ? "Login cadastrado no Hub" : "Discord sem login";
     copy.append(name, meta);
     row.append(avatar, copy);
-    usersDirectoryList.append(row);
+    container.append(row);
   });
+}
+
+function renderUserDirectoryList() {
+  renderUsersDirectoryTabs();
+  const discordOnly = usersDirectoryData.discordOnly;
+  const hubUsers = usersDirectoryData.hubUsers;
+  if (directoryDiscordCount) directoryDiscordCount.textContent = discordOnly.length;
+  if (directoryHubCount) directoryHubCount.textContent = hubUsers.length;
+  if (directoryDiscordOnlyTotal)
+    directoryDiscordOnlyTotal.textContent = discordOnly.length;
+  if (directoryHubUsersTotal) directoryHubUsersTotal.textContent = hubUsers.length;
+  renderDirectoryGroup(
+    directoryDiscordOnlyList,
+    discordOnly,
+    "Nenhum usuário do Discord sem login encontrado.",
+    "discord",
+  );
+  renderDirectoryGroup(
+    directoryHubUsersList,
+    hubUsers,
+    "Nenhum login cadastrado no Hub ainda.",
+    "hub",
+  );
 }
 
 async function fetchUsersDirectory() {
@@ -761,29 +790,36 @@ async function fetchUsersDirectory() {
   };
 }
 
-async function openUsersDirectory() {
-  usersDirectoryOverlay?.classList.remove("hidden");
-  usersDirectoryList.innerHTML = "";
-  const loading = document.createElement("p");
-  loading.className = "users-directory-empty";
-  loading.textContent = "Carregando usuários...";
-  usersDirectoryList.append(loading);
-
+async function refreshUsersDirectory() {
   try {
     await fetchUsersDirectory();
     renderUserDirectoryList();
   } catch (error) {
     console.warn("API users directory:", error.message);
-    usersDirectoryList.innerHTML = "";
-    const empty = document.createElement("p");
-    empty.className = "users-directory-empty";
-    empty.textContent = "Nao foi possivel carregar usuários agora.";
-    usersDirectoryList.append(empty);
+    renderDirectoryGroup(
+      directoryDiscordOnlyList,
+      [],
+      "Nao foi possivel carregar usuários agora.",
+      "discord",
+    );
   }
+}
+
+function openUsersDirectoryConfig() {
+  usersDirectoryOverlay?.classList.remove("hidden");
+  renderUsersDirectoryTabs();
 }
 
 function closeUsersDirectory() {
   usersDirectoryOverlay?.classList.add("hidden");
+}
+
+async function toggleUsersDirectorySidebar() {
+  const willOpen = usersDirectorySidebar?.classList.contains("hidden");
+  usersDirectorySidebar?.classList.toggle("hidden", !willOpen);
+  usersDirectoryButton?.classList.toggle("active", willOpen);
+  document.body.classList.toggle("directory-open", willOpen);
+  if (willOpen) await refreshUsersDirectory();
 }
 
 async function saveDiscordBotToken(event) {
@@ -806,12 +842,16 @@ async function saveDiscordBotToken(event) {
     if (!response.ok) throw new Error(result.error || "Nao foi possivel salvar.");
     discordBotTokenInput.value = "";
     showToast("Token salvo no servidor local.");
-    await fetchUsersDirectory();
+    await refreshUsersDirectory();
     usersDirectoryView = "discord-only";
-    renderUserDirectoryList();
+    renderUsersDirectoryTabs();
   } catch (error) {
     console.warn("API discord-token:", error.message);
-    showToast("Nao foi possivel salvar o token no servidor local.");
+    showToast(
+      window.location.protocol === "file:"
+        ? "Servidor Node local desligado. Inicie o servidor para salvar o token."
+        : "Nao foi possivel salvar o token no servidor.",
+    );
   } finally {
     if (button) button.disabled = false;
   }
@@ -846,6 +886,7 @@ function loginWithTestUser() {
     avatarInitial: TEST_LOGIN_USERNAME.slice(0, 1).toUpperCase(),
     avatarUrl: "",
     roles: [ADMIN_ROLE_ID],
+    coins: 0,
   }, "test");
   showToast("Login teste ativado.");
 }
@@ -1027,19 +1068,101 @@ function filterSettingsSidebar() {
   });
 }
 
-function updateCoinRow(row, delta) {
-  const nextBalance = Math.max(0, Number(row.dataset.playerBalance || 0) + delta);
-  row.dataset.playerBalance = String(nextBalance);
-  const balance = row.querySelector(".coin-balance");
-  if (balance) balance.textContent = formatCoins(nextBalance);
-}
-
 function filterCoinRows() {
   const term = coinPlayerSearch?.value.trim().toLowerCase() || "";
-  coinRows.forEach((row) => {
+  Array.from(hubCoinRows?.querySelectorAll("[data-player-balance]") || []).forEach((row) => {
     const player = row.querySelector(".coin-player")?.textContent.toLowerCase() || "";
     row.classList.toggle("hidden", term && !player.includes(term));
   });
+}
+
+function renderHubCoinUsers() {
+  if (!hubCoinRows) return;
+  const term = coinPlayerSearch?.value.trim().toLowerCase() || "";
+  hubCoinRows.innerHTML = "";
+
+  if (!hubCoinUsers.length) {
+    const empty = document.createElement("div");
+    empty.className = "one-coins-row one-coins-empty";
+    empty.textContent = "Nenhum usuário com login no Hub ainda.";
+    hubCoinRows.append(empty);
+    return;
+  }
+
+  hubCoinUsers.forEach((user) => {
+    const row = document.createElement("div");
+    row.className = "one-coins-row";
+    row.dataset.playerBalance = String(Number(user.coins) || 0);
+    row.dataset.userId = user.id;
+
+    const player = document.createElement("span");
+    player.className = "coin-player";
+    const initial = document.createElement("b");
+    initial.textContent = (user.username || "U").slice(0, 1).toUpperCase();
+    player.append(initial, document.createTextNode(user.username || "Usuario"));
+
+    const balance = document.createElement("span");
+    balance.className = "coin-balance";
+    balance.textContent = formatCoins(Number(user.coins) || 0);
+
+    const actions = document.createElement("span");
+    actions.className = "coin-actions";
+    const add = document.createElement("button");
+    add.className = "coin-add";
+    add.type = "button";
+    add.textContent = "+ Adicionar";
+    add.addEventListener("click", () => updateUserCoins(user.id, 100));
+    const remove = document.createElement("button");
+    remove.className = "coin-remove";
+    remove.type = "button";
+    remove.textContent = "- Remover";
+    remove.addEventListener("click", () => updateUserCoins(user.id, -100));
+    actions.append(add, remove);
+
+    row.append(player, balance, actions);
+    row.classList.toggle(
+      "hidden",
+      Boolean(term && !player.textContent.toLowerCase().includes(term)),
+    );
+    hubCoinRows.append(row);
+  });
+}
+
+async function loadHubCoinUsers() {
+  if (!hubCoinRows) return;
+  try {
+    const response = await fetch(`${API_BASE}/api/users`);
+    if (!response.ok) throw new Error("Usuarios indisponiveis");
+    hubCoinUsers = await response.json();
+    renderHubCoinUsers();
+  } catch (error) {
+    console.warn("API users:", error.message);
+    hubCoinUsers = [];
+    renderHubCoinUsers();
+  }
+}
+
+async function updateUserCoins(userId, delta) {
+  try {
+    const response = await fetch(`${API_BASE}/api/users/coins`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, delta }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || "Nao foi possivel atualizar.");
+    const index = hubCoinUsers.findIndex((user) => user.id === userId);
+    if (index >= 0) hubCoinUsers[index] = result;
+    if (discordUser.id === userId) {
+      coins = Number(result.coins) || 0;
+      updateBalances();
+    }
+    renderHubCoinUsers();
+    showToast("Saldo atualizado no banco de dados.");
+  } catch (error) {
+    console.warn("API users/coins:", error.message);
+    showToast("Nao foi possivel atualizar os coins.");
+  }
 }
 
 function renderGameBanners() {
@@ -2275,14 +2398,6 @@ settingsOpenButtons.forEach((button) => {
 
 settingsSidebarSearch?.addEventListener("input", filterSettingsSidebar);
 coinPlayerSearch?.addEventListener("input", filterCoinRows);
-document.querySelectorAll("[data-coin-action]").forEach((button) => {
-  button.addEventListener("click", () => {
-    const row = button.closest("[data-player-balance]");
-    if (!row) return;
-    const delta = button.dataset.coinAction === "add" ? 100 : -100;
-    updateCoinRow(row, delta);
-  });
-});
 
 settingsAccessSubmit?.addEventListener("click", unlockSettingsWithCode);
 settingsAccessInput?.addEventListener("keydown", (event) => {
@@ -2325,7 +2440,17 @@ topbarLogout?.addEventListener("click", logoutDiscord);
 notificationsButton?.addEventListener("click", () => {
   showToast("Nenhuma notificação nova.");
 });
-usersDirectoryButton?.addEventListener("click", openUsersDirectory);
+let usersDirectoryClickTimer;
+usersDirectoryButton?.addEventListener("click", () => {
+  clearTimeout(usersDirectoryClickTimer);
+  usersDirectoryClickTimer = setTimeout(() => {
+    toggleUsersDirectorySidebar();
+  }, 180);
+});
+usersDirectoryButton?.addEventListener("dblclick", () => {
+  clearTimeout(usersDirectoryClickTimer);
+  openUsersDirectoryConfig();
+});
 usersDirectoryClose?.addEventListener("click", closeUsersDirectory);
 usersDirectoryOverlay?.addEventListener("click", (event) => {
   if (event.target === usersDirectoryOverlay) closeUsersDirectory();
@@ -2333,7 +2458,7 @@ usersDirectoryOverlay?.addEventListener("click", (event) => {
 usersDirectoryTabs.forEach((button) => {
   button.addEventListener("click", () => {
     usersDirectoryView = button.dataset.usersView;
-    renderUserDirectoryList();
+    renderUsersDirectoryTabs();
   });
 });
 discordTokenForm?.addEventListener("submit", saveDiscordBotToken);
@@ -2365,6 +2490,7 @@ window.addEventListener("hashchange", () => {
 async function initApp() {
   updateAccountMode();
   await loadShopProductsFromApi();
+  await loadHubCoinUsers();
   await loadEventsFromApi({ selectLatest: true });
   updateBalances();
   renderHubCards();

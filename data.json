@@ -2,5 +2,8 @@
   "shop_products": [],
   "events": [],
   "event_participants": [],
-  "users": []
+  "users": [],
+  "settings": {
+    "discordBotToken": ""
+  }
 }

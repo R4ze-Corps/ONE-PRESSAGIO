@@ -24,29 +24,31 @@
             <a href="#shop">Shop</a>
             <a href="#settings">Ajustes</a>
           </nav>
-          <div class="topbar-account" aria-label="Perfil">
-            <a class="user-entry" href="#profile" aria-label="Abrir perfil">
-              <span class="avatar-mini" aria-hidden="true"></span>
-              <span class="account-copy">
-                <span class="username" data-user-name>ONE HUB</span>
-                <small>Administrador</small>
-              </span>
-            </a>
-            <button id="usersDirectoryButton" class="account-icon-button users-directory-button" type="button" aria-label="Abrir usuários">
+          <div class="topbar-actions">
+            <div class="topbar-account" aria-label="Perfil">
+              <a class="user-entry" href="#profile" aria-label="Abrir perfil">
+                <span class="avatar-mini" aria-hidden="true"></span>
+                <span class="account-copy">
+                  <span class="username" data-user-name>ONE HUB</span>
+                  <small>Administrador</small>
+                </span>
+              </a>
+              <button id="topbarLogout" class="account-icon-button logout-mini" type="button" aria-label="Sair da conta">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M11 20H2" />
+                  <path d="M11 4.562v16.157a1 1 0 0 0 1.242.97L19 20V5.562a2 2 0 0 0-1.515-1.94l-4-1A2 2 0 0 0 11 4.561z" />
+                  <path d="M11 4H8a2 2 0 0 0-2 2v14" />
+                  <path d="M14 12h.01" />
+                  <path d="M22 20h-3" />
+                </svg>
+              </button>
+            </div>
+            <button id="usersDirectoryButton" class="directory-top-button" type="button" aria-label="Abrir usuários">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <rect x="2" y="4" width="20" height="16" rx="2" />
                 <path d="M10 4v4" />
                 <path d="M2 8h20" />
                 <path d="M6 4v4" />
-              </svg>
-            </button>
-            <button id="topbarLogout" class="account-icon-button logout-mini" type="button" aria-label="Sair da conta">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M11 20H2" />
-                <path d="M11 4.562v16.157a1 1 0 0 0 1.242.97L19 20V5.562a2 2 0 0 0-1.515-1.94l-4-1A2 2 0 0 0 11 4.561z" />
-                <path d="M11 4H8a2 2 0 0 0-2 2v14" />
-                <path d="M14 12h.01" />
-                <path d="M22 20h-3" />
               </svg>
             </button>
           </div>
@@ -494,38 +496,7 @@
                   <span>Saldo Atual (OC)</span>
                   <span>Ação</span>
                 </div>
-                <div class="one-coins-row" data-player-balance="1500">
-                  <span class="coin-player"><b>Z</b>Zezinho_Gamer</span>
-                  <span class="coin-balance">1.500</span>
-                  <span class="coin-actions">
-                    <button class="coin-add" type="button" data-coin-action="add">+ Adicionar</button>
-                    <button class="coin-remove" type="button" data-coin-action="remove">- Remover</button>
-                  </span>
-                </div>
-                <div class="one-coins-row" data-player-balance="3200">
-                  <span class="coin-player"><b>M</b>Mariazinha99</span>
-                  <span class="coin-balance">3.200</span>
-                  <span class="coin-actions">
-                    <button class="coin-add" type="button" data-coin-action="add">+ Adicionar</button>
-                    <button class="coin-remove" type="button" data-coin-action="remove">- Remover</button>
-                  </span>
-                </div>
-                <div class="one-coins-row" data-player-balance="450">
-                  <span class="coin-player"><b>D</b>DarkSlayer</span>
-                  <span class="coin-balance">450</span>
-                  <span class="coin-actions">
-                    <button class="coin-add" type="button" data-coin-action="add">+ Adicionar</button>
-                    <button class="coin-remove" type="button" data-coin-action="remove">- Remover</button>
-                  </span>
-                </div>
-                <div class="one-coins-row" data-player-balance="8900">
-                  <span class="coin-player"><b>L</b>LoboSolitario</span>
-                  <span class="coin-balance">8.900</span>
-                  <span class="coin-actions">
-                    <button class="coin-add" type="button" data-coin-action="add">+ Adicionar</button>
-                    <button class="coin-remove" type="button" data-coin-action="remove">- Remover</button>
-                  </span>
-                </div>
+                <div id="hubCoinRows"></div>
               </div>
             </div>
 
@@ -870,8 +841,8 @@
         <div class="modal-head">
           <div>
             <p class="eyebrow">Usuários</p>
-            <h2 id="usersDirectoryTitle">Diretório do Hub</h2>
-            <p>Discord e logins cadastrados na plataforma.</p>
+            <h2 id="usersDirectoryTitle">Configurar diretório do Hub</h2>
+            <p>Cadastre o token do bot e defina a origem da lista lateral.</p>
           </div>
           <button id="usersDirectoryClose" class="modal-close" type="button" aria-label="Fechar">×</button>
         </div>
@@ -886,9 +857,27 @@
           <button class="active" type="button" data-users-view="discord-only">Discord sem login</button>
           <button type="button" data-users-view="hub-users">Com login no Hub</button>
         </div>
-        <div id="usersDirectoryList" class="users-directory-list"></div>
       </article>
     </div>
+
+    <aside id="usersDirectorySidebar" class="users-directory-sidebar hidden" aria-label="Diretório de usuários do Hub">
+      <div class="directory-sidebar-head">
+        <span class="directory-dot online"></span>
+        <strong id="directoryDiscordCount">0</strong>
+        <span class="directory-dot hub"></span>
+        <strong id="directoryHubCount">0</strong>
+      </div>
+      <div class="directory-sidebar-groups">
+        <section>
+          <h3>Discord sem login — <span id="directoryDiscordOnlyTotal">0</span></h3>
+          <div id="directoryDiscordOnlyList" class="directory-member-list"></div>
+        </section>
+        <section>
+          <h3>Com login no Hub — <span id="directoryHubUsersTotal">0</span></h3>
+          <div id="directoryHubUsersList" class="directory-member-list"></div>
+        </section>
+      </div>
+    </aside>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
 

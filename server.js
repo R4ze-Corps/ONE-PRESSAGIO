@@ -164,6 +164,7 @@ function normalizeUser(user) {
   return {
     id: (user._id || user.id).toString(),
     username: user.username,
+    coins: Number(user.coins) || 0,
     createdAt: user.createdAt,
   };
 }
@@ -337,6 +338,7 @@ async function handleApi(request, response, pathname) {
             username,
             usernameKey,
             passwordHash: hashPassword(password),
+            coins: 0,
             roles: [],
             createdAt: new Date(),
           };
@@ -366,6 +368,7 @@ async function handleApi(request, response, pathname) {
           username,
           usernameKey,
           passwordHash: hashPassword(password),
+          coins: 0,
           roles: [],
           createdAt: new Date(),
         };
@@ -380,6 +383,44 @@ async function handleApi(request, response, pathname) {
         return true;
       }
       sendJson(response, 200, normalizeUser(user));
+      return true;
+    }
+
+    if (pathname === "/api/users/coins" && request.method === "POST") {
+      const body = await readJson(request);
+      const userId = body.userId;
+      const delta = Number(body.delta) || 0;
+      if (!userId) {
+        sendJson(response, 400, { error: "ID do usuario obrigatorio." });
+        return true;
+      }
+
+      if (!db) {
+        const data = await readDataFile();
+        const user = (data.users || []).find((item) => item.id === userId);
+        if (!user) {
+          sendJson(response, 404, { error: "Usuario nao encontrado." });
+          return true;
+        }
+        user.coins = Math.max(0, (Number(user.coins) || 0) + delta);
+        await writeDataFile(data);
+        sendJson(response, 200, normalizeUser(user));
+        return true;
+      }
+
+      const filter = ObjectId.isValid(userId)
+        ? { _id: new ObjectId(userId) }
+        : { id: userId };
+      const user = await db.collection("users").findOne(filter);
+      if (!user) {
+        sendJson(response, 404, { error: "Usuario nao encontrado." });
+        return true;
+      }
+      const nextCoins = Math.max(0, (Number(user.coins) || 0) + delta);
+      await db.collection("users").updateOne(filter, {
+        $set: { coins: nextCoins },
+      });
+      sendJson(response, 200, normalizeUser({ ...user, coins: nextCoins }));
       return true;
     }
 
@@ -575,7 +616,7 @@ const server = createServer(async (request, response) => {
     return;
   }
 
-  const filePath = resolvePath(request.url);
+  let filePath = resolvePath(request.url);
 
   if (!filePath.startsWith(root) || !existsSync(filePath)) {
     response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
@@ -583,11 +624,26 @@ const server = createServer(async (request, response) => {
     return;
   }
 
+  const fileStats = await fs.stat(filePath);
+  if (fileStats.isDirectory()) {
+    filePath = join(filePath, "index.html");
+    if (!filePath.startsWith(root) || !existsSync(filePath)) {
+      filePath = join(root, "index.html");
+    }
+  }
+
   response.writeHead(200, {
     "Access-Control-Allow-Origin": "*",
     "Content-Type": contentTypes[extname(filePath)] || "application/octet-stream",
   });
-  createReadStream(filePath).pipe(response);
+  createReadStream(filePath)
+    .on("error", () => {
+      if (!response.headersSent) {
+        response.writeHead(500, { "Content-Type": "text/plain; charset=utf-8" });
+      }
+      response.end("Nao foi possivel carregar o arquivo");
+    })
+    .pipe(response);
 });
 
 server.on("error", (error) => {

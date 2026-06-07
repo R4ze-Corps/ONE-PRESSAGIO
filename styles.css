@@ -153,8 +153,14 @@ button {
   text-transform: none;
 }
 
-.topbar-account {
+.topbar-actions {
   justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbar-account {
   display: inline-flex;
   align-items: center;
   gap: 12px;
@@ -190,14 +196,34 @@ button {
   height: 15px;
 }
 
-.users-directory-button {
-  width: 28px;
-}
-
 .logout-mini {
   width: 28px;
   border-left: 1px solid var(--line);
   opacity: 0.68;
+}
+
+.directory-top-button {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 46px;
+  border: 0;
+  border-radius: 0;
+  color: var(--muted);
+  background: transparent;
+  box-shadow: none;
+  transition: color 160ms ease, transform 160ms ease;
+}
+
+.directory-top-button:hover,
+.directory-top-button.active {
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.directory-top-button svg {
+  width: 17px;
+  height: 17px;
 }
 
 .account-copy {
@@ -2765,6 +2791,12 @@ h1 {
   font-size: 0.82rem;
 }
 
+.one-coins-empty {
+  grid-template-columns: 1fr;
+  color: var(--muted);
+  text-align: center;
+}
+
 .coin-actions {
   display: inline-flex;
   justify-content: flex-end;
@@ -3199,6 +3231,143 @@ h1 {
   width: min(640px, 100%);
 }
 
+.users-directory-sidebar {
+  position: fixed;
+  top: 72px;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  width: min(270px, 88vw);
+  border-left: 1px solid var(--line);
+  padding: 16px 12px 22px;
+  color: var(--text);
+  background: var(--bg);
+  box-shadow: none;
+  overflow: auto;
+}
+
+.users-directory-sidebar.hidden {
+  display: none;
+}
+
+.directory-sidebar-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
+  padding: 0 8px;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.directory-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 3px solid var(--line);
+}
+
+.directory-dot.online {
+  border: 0;
+  background: #23a95b;
+}
+
+.directory-dot.hub {
+  border-color: var(--accent);
+}
+
+.directory-sidebar-groups {
+  display: grid;
+  gap: 18px;
+}
+
+.directory-sidebar-groups h3 {
+  margin: 0 0 8px;
+  padding: 0 8px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.directory-member-list {
+  display: grid;
+  gap: 6px;
+}
+
+.directory-member-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border-radius: 8px;
+  padding: 4px 8px;
+  color: var(--text);
+}
+
+.directory-member-row:hover {
+  background: var(--panel-soft);
+}
+
+.directory-member-avatar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  color: #fff;
+  background: linear-gradient(145deg, #1484ff, #42d4ff);
+  background-position: center;
+  background-size: cover;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.directory-member-avatar::after {
+  content: "";
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--bg);
+  border-radius: 50%;
+  background: #23a95b;
+}
+
+.directory-member-avatar.has-image {
+  color: transparent;
+}
+
+.directory-member-row > span:last-child {
+  display: grid;
+  min-width: 0;
+}
+
+.directory-member-row strong {
+  overflow: hidden;
+  color: var(--accent);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.84rem;
+}
+
+.directory-member-row small {
+  overflow: hidden;
+  color: var(--muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.68rem;
+}
+
+.directory-empty {
+  margin: 0;
+  padding: 8px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.4;
+}
+
 .discord-token-form {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -3256,50 +3425,6 @@ h1 {
   background: var(--accent);
 }
 
-.users-directory-list {
-  display: grid;
-  gap: 10px;
-  max-height: 380px;
-  overflow: auto;
-}
-
-.users-directory-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 12px;
-  background: var(--panel-soft);
-}
-
-.users-directory-avatar {
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  color: #fff;
-  background: var(--accent);
-  background-position: center;
-  background-size: cover;
-  font-weight: 800;
-}
-
-.users-directory-avatar.has-image {
-  color: transparent;
-}
-
-.users-directory-row span:last-child {
-  display: grid;
-  gap: 2px;
-}
-
-.users-directory-row strong {
-  color: var(--text);
-}
-
-.users-directory-row small,
 .users-directory-empty {
   color: var(--muted);
 }

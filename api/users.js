@@ -9,6 +9,7 @@ function publicUser(user) {
   return {
     id: user._id.toString(),
     username: user.username,
+    coins: Number(user.coins) || 0,
     createdAt: user.createdAt,
   };
 }
@@ -71,6 +72,7 @@ export default async function handler(request, response) {
         username,
         usernameKey,
         passwordHash: hashPassword(password),
+        coins: 0,
         roles: [],
         createdAt: new Date(),
       };
