@@ -88,7 +88,7 @@ function sendJson(response, status, data) {
   response.writeHead(status, {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "Content-Type",
-    "Access-Control-Allow-Methods": "GET,POST,DELETE,OPTIONS",
+    "Access-Control-Allow-Methods": "GET,POST,PATCH,DELETE,OPTIONS",
     "Content-Type": "application/json; charset=utf-8",
   });
   response.end(JSON.stringify(data));
@@ -484,6 +484,70 @@ async function handleApi(request, response, pathname) {
       }
       const result = await db.collection("events").insertOne(event);
       sendJson(response, 201, normalizeEvent({ ...event, _id: result.insertedId }));
+      return true;
+    }
+
+    if (pathname === "/api/events" && request.method === "PATCH") {
+      const url = new URL(request.url, `http://localhost:${port}`);
+      const body = await readJson(request);
+      const eventId = url.searchParams.get("id") || body.id;
+      if (!eventId) {
+        sendJson(response, 400, { error: "ID do evento obrigatorio." });
+        return true;
+      }
+
+      const allowedStatuses = ["active", "closed"];
+      const updates = {};
+      if (typeof body.title === "string") updates.title = body.title;
+      if (typeof body.mainDescription === "string")
+        updates.mainDescription = body.mainDescription;
+      if (typeof body.detailDescription === "string")
+        updates.detailDescription = body.detailDescription;
+      if (typeof body.bannerUrl === "string") updates.bannerUrl = body.bannerUrl;
+      if (typeof body.eventTime === "string") updates.eventTime = body.eventTime;
+      if (typeof body.location === "string") updates.location = body.location;
+      if (typeof body.reward === "string") updates.reward = body.reward;
+      if (typeof body.status === "string") {
+        if (!allowedStatuses.includes(body.status)) {
+          sendJson(response, 400, { error: "Status do evento invalido." });
+          return true;
+        }
+        updates.status = body.status;
+      }
+
+      if (!Object.keys(updates).length) {
+        sendJson(response, 400, { error: "Nenhum campo para atualizar." });
+        return true;
+      }
+
+      updates.updatedAt = new Date();
+
+      if (!db) {
+        const data = await readDataFile();
+        const event = (data.events || []).find((item) => item.id === eventId);
+        if (!event) {
+          sendJson(response, 404, { error: "Evento nao encontrado." });
+          return true;
+        }
+        Object.assign(event, updates);
+        await writeDataFile(data);
+        sendJson(response, 200, normalizeEvent(event));
+        return true;
+      }
+
+      const eventFilter = ObjectId.isValid(eventId)
+        ? { _id: new ObjectId(eventId) }
+        : { id: eventId };
+      const result = await db.collection("events").findOneAndUpdate(
+        eventFilter,
+        { $set: updates },
+        { returnDocument: "after" },
+      );
+      if (!result) {
+        sendJson(response, 404, { error: "Evento nao encontrado." });
+        return true;
+      }
+      sendJson(response, 200, normalizeEvent(result));
       return true;
     }
 
