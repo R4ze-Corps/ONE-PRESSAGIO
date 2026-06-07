@@ -1491,6 +1491,24 @@ async function deleteEventFromApi(eventId) {
   return response.json();
 }
 
+async function updateEventInApi(eventId, eventData) {
+  const response = await fetch(
+    `${API_BASE}/api/events?id=${encodeURIComponent(eventId)}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(eventData),
+    },
+  );
+  if (!response.ok) {
+    const result = await response.json().catch(() => ({}));
+    const error = new Error(result.error || "Nao foi possivel atualizar o evento");
+    error.status = response.status;
+    throw error;
+  }
+  return response.json();
+}
+
 async function deleteEvent(config) {
   const confirmed = window.confirm(`Excluir o evento "${config.title}"?`);
   if (!confirmed) return;
@@ -1512,6 +1530,41 @@ async function deleteEvent(config) {
   } catch (error) {
     console.warn("API events:", error.message);
     showToast("Nao foi possivel excluir no banco de dados.");
+  }
+}
+
+async function closeEvent(config) {
+  try {
+    const event = await updateEventInApi(config.id, { status: "closed" });
+    const updatedConfig = apiEventToConfig(event);
+    const itemIndex = eventItems.findIndex((item) => item.id === config.id);
+    if (itemIndex >= 0) eventItems[itemIndex] = updatedConfig;
+    if (eventConfig.id === config.id) {
+      setCurrentEvent(updatedConfig);
+      eventJoined = false;
+    }
+    renderEventContent();
+    showToast("Evento encerrado e salvo no banco de dados.");
+  } catch (error) {
+    console.warn("API events:", error.message);
+    if (error.status === 404) {
+      try {
+        const event = await saveEventToApi({ ...config, status: "closed" }, { apply: false });
+        const updatedConfig = apiEventToConfig(event);
+        const itemIndex = eventItems.findIndex((item) => item.id === config.id);
+        if (itemIndex >= 0) eventItems[itemIndex] = updatedConfig;
+        if (eventConfig.id === config.id) {
+          setCurrentEvent(updatedConfig);
+          eventJoined = false;
+        }
+        renderEventContent();
+        showToast("Evento encerrado e criado no banco de dados.");
+        return;
+      } catch (createError) {
+        console.warn("API events:", createError.message);
+      }
+    }
+    showToast("Nao foi possivel encerrar no banco de dados.");
   }
 }
 
@@ -1576,14 +1629,7 @@ function renderSettingsEventsRows() {
         openEventEditModal();
       }),
       createIconButton("Encerrar evento", settingsEventActionIcons.close, () => {
-        const item = eventItems.find((event) => event.id === config.id);
-        if (item) item.status = "closed";
-        if (eventConfig.id === config.id) {
-          eventConfig.status = "closed";
-          eventJoined = false;
-        }
-        renderEventContent();
-        showToast("Evento encerrado.");
+        closeEvent(config);
       }),
       createIconButton("Excluir evento", settingsEventActionIcons.delete, () => {
         deleteEvent(config);

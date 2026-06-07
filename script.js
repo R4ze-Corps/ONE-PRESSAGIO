@@ -1500,7 +1500,12 @@ async function updateEventInApi(eventId, eventData) {
       body: JSON.stringify(eventData),
     },
   );
-  if (!response.ok) throw new Error("Nao foi possivel atualizar o evento");
+  if (!response.ok) {
+    const result = await response.json().catch(() => ({}));
+    const error = new Error(result.error || "Nao foi possivel atualizar o evento");
+    error.status = response.status;
+    throw error;
+  }
   return response.json();
 }
 
@@ -1542,6 +1547,23 @@ async function closeEvent(config) {
     showToast("Evento encerrado e salvo no banco de dados.");
   } catch (error) {
     console.warn("API events:", error.message);
+    if (error.status === 404) {
+      try {
+        const event = await saveEventToApi({ ...config, status: "closed" }, { apply: false });
+        const updatedConfig = apiEventToConfig(event);
+        const itemIndex = eventItems.findIndex((item) => item.id === config.id);
+        if (itemIndex >= 0) eventItems[itemIndex] = updatedConfig;
+        if (eventConfig.id === config.id) {
+          setCurrentEvent(updatedConfig);
+          eventJoined = false;
+        }
+        renderEventContent();
+        showToast("Evento encerrado e criado no banco de dados.");
+        return;
+      } catch (createError) {
+        console.warn("API events:", createError.message);
+      }
+    }
     showToast("Nao foi possivel encerrar no banco de dados.");
   }
 }

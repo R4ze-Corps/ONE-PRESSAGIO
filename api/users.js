@@ -9,6 +9,9 @@ function publicUser(user) {
   return {
     id: user._id.toString(),
     username: user.username,
+    provider: user.provider || "local",
+    discordId: user.discordId || "",
+    avatarUrl: user.avatarUrl || "",
     coins: Number(user.coins) || 0,
     createdAt: user.createdAt,
   };
@@ -53,6 +56,37 @@ export default async function handler(request, response) {
     const username = normalizeUsername(body.username);
     const password = String(body.password || "");
 
+    if (action === "discord") {
+      const discordId = String(body.discordId || "").trim();
+      if (!discordId || !username) {
+        response.status(400).json({ error: "Dados do Discord obrigatorios." });
+        return;
+      }
+
+      const now = new Date();
+      const result = await db.collection("users").findOneAndUpdate(
+        { discordId },
+        {
+          $set: {
+            username,
+            usernameKey: username.toLowerCase(),
+            discordId,
+            avatarUrl: body.avatarUrl || "",
+            provider: "discord",
+            lastLoginAt: now,
+          },
+          $setOnInsert: {
+            coins: 0,
+            roles: [],
+            createdAt: now,
+          },
+        },
+        { upsert: true, returnDocument: "after" },
+      );
+      response.status(200).json(publicUser(result));
+      return;
+    }
+
     if (!username || !password) {
       response.status(400).json({ error: "Usuario e senha sao obrigatorios." });
       return;
@@ -73,6 +107,7 @@ export default async function handler(request, response) {
         usernameKey,
         passwordHash: hashPassword(password),
         coins: 0,
+        provider: "local",
         roles: [],
         createdAt: new Date(),
       };

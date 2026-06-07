@@ -164,6 +164,9 @@ function normalizeUser(user) {
   return {
     id: (user._id || user.id).toString(),
     username: user.username,
+    provider: user.provider || "local",
+    discordId: user.discordId || "",
+    avatarUrl: user.avatarUrl || "",
     coins: Number(user.coins) || 0,
     createdAt: user.createdAt,
   };
@@ -471,7 +474,7 @@ async function handleApi(request, response, pathname) {
         eventTime: body.eventTime || "",
         location: body.location || "",
         reward: body.reward || "",
-        status: "active",
+        status: body.status || "active",
         createdAt: new Date(),
       };
       if (!db) {
