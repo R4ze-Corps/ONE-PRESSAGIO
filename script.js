@@ -758,7 +758,11 @@ function renderDirectoryGroup(container, list, emptyText, type) {
     name.textContent = user.username || "Usuario";
     const meta = document.createElement("small");
     meta.textContent =
-      type === "hub" ? "Login cadastrado no Hub" : "Discord sem login";
+      type === "hub"
+        ? user.provider === "discord"
+          ? "Login via Discord no Hub"
+          : "Login cadastrado no Hub"
+        : "Discord sem login";
     copy.append(name, meta);
     row.append(avatar, copy);
     container.append(row);
