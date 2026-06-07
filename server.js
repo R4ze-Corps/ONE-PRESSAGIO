@@ -317,12 +317,76 @@ async function handleApi(request, response, pathname) {
       const username = String(body.username || "").trim();
       const password = String(body.password || "");
 
+      const usernameKey = username.toLowerCase();
+
+      if (action === "discord") {
+        const discordId = String(body.discordId || "").trim();
+        if (!discordId || !username) {
+          sendJson(response, 400, { error: "Dados do Discord obrigatorios." });
+          return true;
+        }
+        const now = new Date();
+
+        if (!db) {
+          const data = await readDataFile();
+          if (!Array.isArray(data.users)) data.users = [];
+          let user = data.users.find((item) => item.discordId === discordId);
+          if (user) {
+            Object.assign(user, {
+              username,
+              usernameKey,
+              discordId,
+              avatarUrl: body.avatarUrl || "",
+              provider: "discord",
+              lastLoginAt: now,
+            });
+          } else {
+            user = {
+              id: createLocalId(),
+              username,
+              usernameKey,
+              discordId,
+              avatarUrl: body.avatarUrl || "",
+              provider: "discord",
+              coins: 0,
+              roles: [],
+              createdAt: now,
+              lastLoginAt: now,
+            };
+            data.users.unshift(user);
+          }
+          await writeDataFile(data);
+          sendJson(response, 200, normalizeUser(user));
+          return true;
+        }
+
+        const result = await db.collection("users").findOneAndUpdate(
+          { discordId },
+          {
+            $set: {
+              username,
+              usernameKey,
+              discordId,
+              avatarUrl: body.avatarUrl || "",
+              provider: "discord",
+              lastLoginAt: now,
+            },
+            $setOnInsert: {
+              coins: 0,
+              roles: [],
+              createdAt: now,
+            },
+          },
+          { upsert: true, returnDocument: "after" },
+        );
+        sendJson(response, 200, normalizeUser(result));
+        return true;
+      }
+
       if (!username || !password) {
         sendJson(response, 400, { error: "Usuario e senha sao obrigatorios." });
         return true;
       }
-
-      const usernameKey = username.toLowerCase();
 
       if (!db) {
         const data = await readDataFile();
@@ -342,6 +406,7 @@ async function handleApi(request, response, pathname) {
             usernameKey,
             passwordHash: hashPassword(password),
             coins: 0,
+            provider: "local",
             roles: [],
             createdAt: new Date(),
           };
@@ -372,6 +437,7 @@ async function handleApi(request, response, pathname) {
           usernameKey,
           passwordHash: hashPassword(password),
           coins: 0,
+          provider: "local",
           roles: [],
           createdAt: new Date(),
         };

@@ -699,6 +699,24 @@ async function saveAccountToDatabase(action, data) {
   return result;
 }
 
+async function saveDiscordAccountToDatabase(user) {
+  const response = await fetch(`${API_BASE}/api/users`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "discord",
+      discordId: user.id,
+      username: user.name || user.username || "Usuario Discord",
+      avatarUrl: user.avatarUrl || "",
+    }),
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(result.error || "Nao foi possivel salvar login Discord.");
+  }
+  return result;
+}
+
 function normalizeDirectoryKey(value) {
   return String(value || "").trim().toLowerCase();
 }
@@ -780,8 +798,15 @@ async function fetchUsersDirectory() {
   const hubNames = new Set(
     hubUsers.map((user) => normalizeDirectoryKey(user.username)),
   );
+  const hubDiscordIds = new Set(
+    hubUsers
+      .map((user) => String(user.discordId || "").trim())
+      .filter(Boolean),
+  );
   const discordOnly = discordUsers.filter(
-    (user) => !hubNames.has(normalizeDirectoryKey(user.username)),
+    (user) =>
+      !hubDiscordIds.has(String(user.id || "").trim()) &&
+      !hubNames.has(normalizeDirectoryKey(user.username)),
   );
 
   usersDirectoryData = {
@@ -931,6 +956,14 @@ async function finishDiscordLoginFromCallback() {
 
   discordUser = normalizeDiscordUser(await response.json());
   discordUser.roles = await fetchDiscordRoles(accessToken);
+  try {
+    const hubUser = await saveDiscordAccountToDatabase(discordUser);
+    discordUser.hubId = hubUser.id;
+    discordUser.coins = Number(hubUser.coins) || 0;
+  } catch (error) {
+    console.warn("API users discord:", error.message);
+    discordUser.coins = Number(discordUser.coins) || 0;
+  }
   discordSession = {
     accessToken,
     user: discordUser,
@@ -1174,8 +1207,13 @@ async function updateUserCoins(userId, delta) {
     if (!response.ok) throw new Error(result.error || "Nao foi possivel atualizar.");
     const index = hubCoinUsers.findIndex((user) => user.id === userId);
     if (index >= 0) hubCoinUsers[index] = result;
-    if (discordUser.id === userId) {
+    if (discordUser.id === userId || discordUser.hubId === userId) {
       coins = Number(result.coins) || 0;
+      discordUser.coins = coins;
+      if (discordSession?.user) {
+        discordSession.user = discordUser;
+        localStorage.setItem("oneDiscordSession", JSON.stringify(discordSession));
+      }
       updateBalances();
     }
     renderHubCoinUsers();
