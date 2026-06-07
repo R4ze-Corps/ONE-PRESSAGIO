@@ -108,15 +108,9 @@ const settingsGamePreviewTitle = document.querySelector(
 const settingsGamePreviewDescription = document.querySelector(
   "#settingsGamePreviewDescription",
 );
-const eventCard = document.querySelector("[data-open-event]");
-const joinEvent = document.querySelector("#joinEvent");
+const eventsList = document.querySelector("#eventsList");
 const eventDetailAction = document.querySelector("#eventDetailAction");
-const eventCardStatus = document.querySelector("#eventCardStatus");
 const eventDetailStatus = document.querySelector("#eventDetailStatus");
-const eventCardBanner = document.querySelector("#eventCardBanner");
-const eventCardTitle = document.querySelector("#eventCardTitle");
-const eventCardDescription = document.querySelector("#eventCardDescription");
-const eventCardTags = document.querySelector("#eventCardTags");
 const eventDetailTitle = document.querySelector("#eventDetailTitle");
 const eventDetailMainDescription = document.querySelector(
   "#eventDetailMainDescription",
@@ -407,6 +401,8 @@ const eventConfig = {
   detailDescription:
     "No início do evento, os humanos entrarão primeiro no labirinto para se esconderem e se posicionarem. Logo depois, as baratas serão liberadas e a batalha começará.\n\nTodos os participantes receberão tacos para se defender e atacar. A partir daí, será uma verdadeira guerra entre Baratas x Humanos até uma das equipes sair vencedora.\n\nData: Hoje\nHorário: 22:00\nLocal: Hotel Presságio\n\nPremiação para a equipe vencedora:\n300K + 10 One Coins\n\nRegras básicas:\nProibido abusar de bugs ou animações.\nProibido sair da área do evento.\nUse estratégia, se esconda, ataque e sobreviva com sua equipe.\n\nEscolha seu lado e venha para essa guerra insana.\nHoje, às 22:00, no Hotel Presságio.",
 };
+
+let eventItems = [{ ...eventConfig }];
 
 const shopItems = [
   {
@@ -992,12 +988,12 @@ const eventIcons = {
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7v14"/><path d="M20 11v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"/><path d="M7.5 7a1 1 0 0 1 0-5A4.8 8 0 0 1 12 7a4.8 8 0 0 1 4.5-5 1 1 0 0 1 0 5"/><rect x="3" y="7" width="18" height="4" rx="1"/></svg>',
 };
 
-function renderEventTags(container) {
+function renderEventTags(container, config = eventConfig) {
   container.innerHTML = "";
   container.append(
-    createEventTag(eventIcons.hours, eventConfig.hours),
-    createEventTag(eventIcons.location, eventConfig.location),
-    createEventTag(eventIcons.reward, eventConfig.reward),
+    createEventTag(eventIcons.hours, config.hours),
+    createEventTag(eventIcons.location, config.location),
+    createEventTag(eventIcons.reward, config.reward),
   );
 }
 
@@ -1014,12 +1010,12 @@ function renderEventDescription() {
     });
 }
 
-function isEventClosed() {
-  return eventConfig.status === "closed";
+function isEventClosed(config = eventConfig) {
+  return config.status === "closed";
 }
 
-function getEventStatusLabel() {
-  return isEventClosed() ? "ENCERRADO" : "ATIVO";
+function getEventStatusLabel(config = eventConfig) {
+  return isEventClosed(config) ? "ENCERRADO" : "ATIVO";
 }
 
 function syncSettingsEventRow() {
@@ -1028,6 +1024,98 @@ function syncSettingsEventRow() {
   if (settingsEventStatus) {
     settingsEventStatus.textContent = getEventStatusLabel();
     settingsEventStatus.classList.toggle("closed", isEventClosed());
+  }
+}
+
+function apiEventToConfig(event) {
+  return {
+    id: event.id || event._id || event.title || "evento-one",
+    title: event.title || "Novo evento ONE",
+    date: event.createdAt
+      ? new Date(event.createdAt).toISOString().slice(0, 10)
+      : event.date || new Date().toISOString().slice(0, 10),
+    status: event.status || "active",
+    mainDescription:
+      event.mainDescription || "Configure a descricao principal do evento.",
+    bannerUrl:
+      event.bannerUrl ||
+      "https://r2.fivemanage.com/vLUsF9vzqBOo7DSFHERFX/imagem_2026-06-04_164833039.png",
+    hours: event.eventTime || event.hours || "22:00 Horas",
+    location: event.location || "Hotel Presságio",
+    reward: event.reward || "350K + 10 One Coins",
+    detailDescription:
+      event.detailDescription ||
+      event.mainDescription ||
+      "Configure a descricao do evento.",
+  };
+}
+
+function setCurrentEvent(event) {
+  Object.assign(eventConfig, apiEventToConfig(event));
+}
+
+function createPublicEventCard(config) {
+  const card = document.createElement("article");
+  card.className = "event-card";
+  card.dataset.eventId = config.id;
+
+  const mark = document.createElement("div");
+  mark.className = "event-mark banner-mark";
+  const image = document.createElement("img");
+  image.src = config.bannerUrl;
+  image.alt = `Banner ${config.title}`;
+  mark.append(image);
+
+  const copy = document.createElement("div");
+  copy.className = "event-copy";
+  const status = document.createElement("span");
+  status.className = "status";
+  status.textContent = isEventClosed(config) ? "Encerrado" : "Ativo agora";
+  const title = document.createElement("h2");
+  title.textContent = config.title;
+  const description = document.createElement("p");
+  description.textContent = config.mainDescription;
+  const tags = document.createElement("div");
+  tags.className = "event-stats";
+  renderEventTags(tags, config);
+  copy.append(status, title, description, tags);
+
+  const button = document.createElement("button");
+  button.className = `button primary${isEventClosed(config) ? " ended" : ""}`;
+  button.type = "button";
+  button.textContent = isEventClosed(config) ? "EVENTO ENCERRADO" : "Participar";
+  button.disabled = isEventClosed(config);
+
+  const openEvent = () => {
+    setCurrentEvent(config);
+    eventJoined = false;
+    renderEventContent();
+    window.location.hash = "event-detail";
+  };
+
+  card.addEventListener("click", openEvent);
+  button.addEventListener("click", (event) => {
+    event.stopPropagation();
+    openEvent();
+  });
+
+  card.append(mark, copy, button);
+  return card;
+}
+
+function renderEventsList() {
+  if (!eventsList) return;
+  eventsList.innerHTML = "";
+  eventItems.forEach((event) => eventsList.append(createPublicEventCard(event)));
+}
+
+function syncCurrentEventInList() {
+  const index = eventItems.findIndex((event) => event.id === eventConfig.id);
+  const current = { ...eventConfig };
+  if (index >= 0) {
+    eventItems[index] = current;
+  } else {
+    eventItems.unshift(current);
   }
 }
 
@@ -1083,21 +1171,17 @@ function applyEventEditForm() {
 }
 
 function renderEventContent() {
-  eventCardTitle.textContent = eventConfig.title;
-  eventCardDescription.textContent = eventConfig.mainDescription;
+  syncCurrentEventInList();
   eventDetailTitle.textContent = eventConfig.title;
   eventDetailMainDescription.textContent = eventConfig.mainDescription;
-  if (eventCardStatus) eventCardStatus.textContent = isEventClosed() ? "Encerrado" : "Ativo agora";
   if (eventDetailStatus) eventDetailStatus.textContent = isEventClosed() ? "Encerrado" : "Ativo agora";
-  eventCardBanner.src = eventConfig.bannerUrl;
-  eventCardBanner.alt = `Banner ${eventConfig.title}`;
   eventDetailBanner.src = eventConfig.bannerUrl;
   eventDetailBanner.alt = `Banner ${eventConfig.title}`;
-  renderEventTags(eventCardTags);
   renderEventTags(eventDetailTags);
   renderEventDescription();
   syncSettingsEventRow();
   updateEventButtons();
+  renderEventsList();
 
   hubConfig.live.target = "event-detail";
   hubConfig.live.title = eventConfig.title;
@@ -1108,33 +1192,33 @@ function renderEventContent() {
 
 function applyApiEvent(event) {
   if (!event) return;
-  eventConfig.id = event.id || eventConfig.id;
-  eventConfig.title = event.title || eventConfig.title;
-  eventConfig.date = event.createdAt
-    ? new Date(event.createdAt).toISOString().slice(0, 10)
-    : eventConfig.date;
-  eventConfig.status = event.status || eventConfig.status;
-  eventConfig.mainDescription =
-    event.mainDescription || eventConfig.mainDescription;
-  eventConfig.bannerUrl = event.bannerUrl || eventConfig.bannerUrl;
-  eventConfig.hours = event.eventTime || eventConfig.hours;
-  eventConfig.location = event.location || eventConfig.location;
-  eventConfig.reward = event.reward || eventConfig.reward;
-  eventConfig.detailDescription =
-    event.detailDescription || eventConfig.detailDescription;
+  setCurrentEvent(event);
 }
 
-async function loadLatestEventFromApi() {
+async function loadEventsFromApi({ selectLatest = false } = {}) {
   try {
-    const response = await fetch(`${API_BASE}/api/events/latest`);
-    if (!response.ok) throw new Error("Evento indisponivel");
-    applyApiEvent(await response.json());
+    const response = await fetch(`${API_BASE}/api/events`);
+    if (!response.ok) throw new Error("Eventos indisponiveis");
+    const events = await response.json();
+    if (!Array.isArray(events) || !events.length) {
+      eventItems = [{ ...eventConfig }];
+      renderEventsList();
+      return;
+    }
+    eventItems = events.map(apiEventToConfig);
+    const selectedStillExists = eventItems.some(
+      (event) => event.id === eventConfig.id,
+    );
+    if (selectLatest || !selectedStillExists) setCurrentEvent(eventItems[0]);
+    renderEventsList();
   } catch (error) {
     console.warn("API events:", error.message);
+    eventItems = [{ ...eventConfig }];
+    renderEventsList();
   }
 }
 
-async function saveEventToApi(eventData = eventConfig) {
+async function saveEventToApi(eventData = eventConfig, { apply = true } = {}) {
   const response = await fetch(`${API_BASE}/api/events`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -1151,7 +1235,7 @@ async function saveEventToApi(eventData = eventConfig) {
   });
   if (!response.ok) throw new Error("Nao foi possivel salvar o evento");
   const event = await response.json();
-  applyApiEvent(event);
+  if (apply) applyApiEvent(event);
   return event;
 }
 
@@ -1201,9 +1285,10 @@ function bindEventConfigForm() {
     event.preventDefault();
     const newEvent = readForm();
     try {
-      await saveEventToApi(newEvent);
+      await saveEventToApi(newEvent, { apply: false });
+      await loadEventsFromApi();
       syncEventConfigForm();
-      showToast("Novo evento criado no MongoDB e sincronizado no Hub.");
+      showToast("Novo evento criado e adicionado na categoria Eventos.");
     } catch (error) {
       console.warn("API events:", error.message);
       showToast("Nao foi possivel criar o evento. Verifique o servidor Node.");
@@ -1530,7 +1615,7 @@ function applyProfileEquipment() {
 }
 
 function updateEventButtons() {
-  [joinEvent, eventDetailAction].forEach((button) => {
+  [eventDetailAction].forEach((button) => {
     if (!button) return;
     if (isEventClosed()) {
       button.textContent = "EVENTO ENCERRADO";
@@ -1580,15 +1665,6 @@ async function toggleEventJoin() {
     showToast("Nao foi possivel salvar sua participacao.");
   }
 }
-
-eventCard.addEventListener("click", () => {
-  window.location.hash = "event-detail";
-});
-
-joinEvent.addEventListener("click", (event) => {
-  event.stopPropagation();
-  window.location.hash = "event-detail";
-});
 
 eventDetailAction.addEventListener("click", toggleEventJoin);
 settingsEditEvent?.addEventListener("click", openEventEditModal);
@@ -1938,7 +2014,7 @@ window.addEventListener("hashchange", () => {
 async function initApp() {
   updateAccountMode();
   await loadShopProductsFromApi();
-  await loadLatestEventFromApi();
+  await loadEventsFromApi({ selectLatest: true });
   updateBalances();
   renderHubCards();
   renderEventContent();

@@ -848,6 +848,11 @@ h1 {
   overflow: hidden;
 }
 
+.events-list {
+  display: grid;
+  gap: 18px;
+}
+
 .event-card::before {
   content: "";
   position: absolute;

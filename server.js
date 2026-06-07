@@ -288,6 +288,24 @@ async function handleApi(request, response, pathname) {
       return true;
     }
 
+    if (pathname === "/api/events" && request.method === "GET") {
+      if (!db) {
+        const data = await readDataFile();
+        const events = data.events
+          .slice()
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        sendJson(response, 200, events.map(normalizeEvent));
+        return true;
+      }
+      const events = await db
+        .collection("events")
+        .find({})
+        .sort({ createdAt: -1 })
+        .toArray();
+      sendJson(response, 200, events.map(normalizeEvent));
+      return true;
+    }
+
     if (pathname === "/api/events/latest" && request.method === "GET") {
       if (!db) {
         const data = await readDataFile();

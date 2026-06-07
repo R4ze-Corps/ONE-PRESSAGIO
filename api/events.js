@@ -4,6 +4,16 @@ export default async function handler(request, response) {
   try {
     const db = await getDb();
 
+    if (request.method === "GET") {
+      const events = await db
+        .collection("events")
+        .find({})
+        .sort({ createdAt: -1 })
+        .toArray();
+      response.status(200).json(events.map(normalizeEvent));
+      return;
+    }
+
     if (request.method === "POST") {
       const body = request.body || {};
       const event = {
@@ -23,7 +33,7 @@ export default async function handler(request, response) {
       return;
     }
 
-    response.setHeader("Allow", "POST");
+    response.setHeader("Allow", "GET, POST");
     response.status(405).json({ error: "Metodo nao permitido" });
   } catch (error) {
     response.status(500).json({ error: error.message });
