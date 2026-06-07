@@ -124,6 +124,15 @@ const settingsEventsRows = document.querySelector("#settingsEventsRows");
 const eventEditOverlay = document.querySelector("#eventEditOverlay");
 const eventEditClose = document.querySelector("#eventEditClose");
 const eventEditForm = document.querySelector("#eventEditForm");
+const eventParticipantsOverlay = document.querySelector(
+  "#eventParticipantsOverlay",
+);
+const eventParticipantsClose = document.querySelector("#eventParticipantsClose");
+const eventParticipantsTitle = document.querySelector("#eventParticipantsTitle");
+const eventParticipantsSubtitle = document.querySelector(
+  "#eventParticipantsSubtitle",
+);
+const eventParticipantsList = document.querySelector("#eventParticipantsList");
 
 let rouletteSpins = 0;
 let rouletteBusy = false;
@@ -1106,6 +1115,115 @@ function createIconButton(label, icon, onClick) {
   return button;
 }
 
+function closeEventParticipantsModal() {
+  eventParticipantsOverlay?.classList.add("hidden");
+}
+
+function renderParticipantsModal(config, participants) {
+  if (!eventParticipantsList) return;
+  eventParticipantsTitle.textContent = config.title;
+  eventParticipantsSubtitle.textContent = `${participants.length} participante${participants.length === 1 ? "" : "s"} inscrito${participants.length === 1 ? "" : "s"}.`;
+  eventParticipantsList.innerHTML = "";
+
+  if (!participants.length) {
+    const empty = document.createElement("p");
+    empty.className = "participants-empty";
+    empty.textContent = "Nenhum participante inscrito neste evento ainda.";
+    eventParticipantsList.append(empty);
+    return;
+  }
+
+  participants.forEach((participant) => {
+    const row = document.createElement("div");
+    row.className = "participant-row";
+    const avatar = document.createElement("span");
+    avatar.className = "participant-avatar";
+    avatar.textContent = (participant.username || "O").trim().charAt(0).toUpperCase();
+    const info = document.createElement("span");
+    const name = document.createElement("strong");
+    name.textContent = participant.username || "ONE HUB";
+    const status = document.createElement("small");
+    status.textContent = "Participando";
+    info.append(name, status);
+    row.append(avatar, info);
+    eventParticipantsList.append(row);
+  });
+}
+
+async function fetchEventParticipants(eventId) {
+  const response = await fetch(
+    `${API_BASE}/api/event-participants?eventId=${encodeURIComponent(eventId)}`,
+  );
+  if (!response.ok) throw new Error("Nao foi possivel carregar inscritos");
+  return response.json();
+}
+
+async function showEventParticipants(config) {
+  eventParticipantsOverlay?.classList.remove("hidden");
+  if (eventParticipantsTitle) eventParticipantsTitle.textContent = config.title;
+  if (eventParticipantsSubtitle)
+    eventParticipantsSubtitle.textContent = "Carregando participantes...";
+  if (eventParticipantsList) eventParticipantsList.innerHTML = "";
+
+  try {
+    const participants = await fetchEventParticipants(config.id);
+    renderParticipantsModal(config, participants);
+  } catch (error) {
+    console.warn("API event-participants:", error.message);
+    if (eventParticipantsSubtitle)
+      eventParticipantsSubtitle.textContent = "Nao foi possivel carregar.";
+    if (eventParticipantsList) {
+      eventParticipantsList.innerHTML = "";
+      const empty = document.createElement("p");
+      empty.className = "participants-empty";
+      empty.textContent = "Verifique o servidor Node ou a conexao com o MongoDB.";
+      eventParticipantsList.append(empty);
+    }
+  }
+}
+
+async function updateEventParticipantCount(config, target) {
+  try {
+    const participants = await fetchEventParticipants(config.id);
+    target.textContent = participants.length;
+  } catch (error) {
+    console.warn("API event-participants:", error.message);
+  }
+}
+
+async function deleteEventFromApi(eventId) {
+  const response = await fetch(
+    `${API_BASE}/api/events?id=${encodeURIComponent(eventId)}`,
+    { method: "DELETE" },
+  );
+  if (!response.ok) throw new Error("Nao foi possivel excluir o evento");
+  return response.json();
+}
+
+async function deleteEvent(config) {
+  const confirmed = window.confirm(`Excluir o evento "${config.title}"?`);
+  if (!confirmed) return;
+
+  try {
+    await deleteEventFromApi(config.id);
+    eventItems = eventItems.filter((event) => event.id !== config.id);
+    if (!eventItems.length) {
+      renderEventsList();
+      renderSettingsEventsRows();
+      showToast("Evento excluido do banco de dados.");
+      return;
+    }
+    if (eventConfig.id === config.id) {
+      setCurrentEvent(eventItems[0]);
+    }
+    renderEventContent();
+    showToast("Evento excluido do banco de dados.");
+  } catch (error) {
+    console.warn("API events:", error.message);
+    showToast("Nao foi possivel excluir no banco de dados.");
+  }
+}
+
 const settingsEventActionIcons = {
   edit:
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
@@ -1149,10 +1267,13 @@ function renderSettingsEventsRows() {
     status.classList.toggle("closed", isEventClosed(config));
     statusCell.append(status);
 
-    const users = document.createElement("span");
+    const users = document.createElement("button");
+    users.type = "button";
     users.setAttribute("role", "cell");
-    users.className = "settings-event-users";
-    users.innerHTML = `${settingsEventActionIcons.users}<span>${index === 0 ? 128 : 0}</span>`;
+    users.className = "settings-event-users settings-event-users-button";
+    users.innerHTML = `${settingsEventActionIcons.users}<span>0</span>`;
+    users.addEventListener("click", () => showEventParticipants(config));
+    updateEventParticipantCount(config, users.querySelector("span"));
 
     const actions = document.createElement("span");
     actions.setAttribute("role", "cell");
@@ -1174,12 +1295,7 @@ function renderSettingsEventsRows() {
         showToast("Evento encerrado.");
       }),
       createIconButton("Excluir evento", settingsEventActionIcons.delete, () => {
-        eventItems = eventItems.filter((event) => event.id !== config.id);
-        if (eventConfig.id === config.id && eventItems[0]) {
-          setCurrentEvent(eventItems[0]);
-        }
-        renderEventContent();
-        showToast("Evento removido da lista local.");
+        deleteEvent(config);
       }),
     );
 
@@ -1749,6 +1865,10 @@ eventDetailAction.addEventListener("click", toggleEventJoin);
 eventEditClose?.addEventListener("click", closeEventEditModal);
 eventEditOverlay?.addEventListener("click", (event) => {
   if (event.target === eventEditOverlay) closeEventEditModal();
+});
+eventParticipantsClose?.addEventListener("click", closeEventParticipantsModal);
+eventParticipantsOverlay?.addEventListener("click", (event) => {
+  if (event.target === eventParticipantsOverlay) closeEventParticipantsModal();
 });
 eventEditForm?.addEventListener("submit", (event) => {
   event.preventDefault();

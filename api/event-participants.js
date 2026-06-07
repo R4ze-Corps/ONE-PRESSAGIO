@@ -7,6 +7,7 @@ function normalizeParticipant(participant) {
     eventTitle: participant.eventTitle,
     userId: participant.userId,
     username: participant.username,
+    avatarUrl: participant.avatarUrl || "",
     status: participant.status,
     joinedAt: participant.joinedAt,
     leftAt: participant.leftAt || null,
@@ -16,8 +17,25 @@ function normalizeParticipant(participant) {
 
 export default async function handler(request, response) {
   try {
+    if (request.method === "GET") {
+      const eventId = request.query?.eventId;
+      if (!eventId) {
+        response.status(400).json({ error: "ID do evento obrigatorio." });
+        return;
+      }
+
+      const db = await getDb();
+      const participants = await db
+        .collection("event_participants")
+        .find({ eventId, status: "joined" })
+        .sort({ joinedAt: -1 })
+        .toArray();
+      response.status(200).json(participants.map(normalizeParticipant));
+      return;
+    }
+
     if (request.method !== "POST") {
-      response.setHeader("Allow", "POST");
+      response.setHeader("Allow", "GET, POST");
       response.status(405).json({ error: "Metodo nao permitido" });
       return;
     }

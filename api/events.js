@@ -1,3 +1,4 @@
+import { ObjectId } from "mongodb";
 import { getDb, normalizeEvent } from "./_mongo.js";
 
 export default async function handler(request, response) {
@@ -33,7 +34,23 @@ export default async function handler(request, response) {
       return;
     }
 
-    response.setHeader("Allow", "GET, POST");
+    if (request.method === "DELETE") {
+      const eventId = request.query?.id || request.body?.id;
+      if (!eventId) {
+        response.status(400).json({ error: "ID do evento obrigatorio." });
+        return;
+      }
+
+      const eventFilter = ObjectId.isValid(eventId)
+        ? { _id: new ObjectId(eventId) }
+        : { id: eventId };
+      const result = await db.collection("events").deleteOne(eventFilter);
+      await db.collection("event_participants").deleteMany({ eventId });
+      response.status(200).json({ deleted: result.deletedCount > 0 });
+      return;
+    }
+
+    response.setHeader("Allow", "GET, POST, DELETE");
     response.status(405).json({ error: "Metodo nao permitido" });
   } catch (error) {
     response.status(500).json({ error: error.message });

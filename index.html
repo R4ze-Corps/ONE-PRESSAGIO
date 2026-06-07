@@ -843,6 +843,20 @@
       </article>
     </div>
 
+    <div id="eventParticipantsOverlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="eventParticipantsTitle">
+      <article class="event-edit-modal participants-modal">
+        <div class="modal-head">
+          <div>
+            <p class="eyebrow">Inscritos</p>
+            <h2 id="eventParticipantsTitle">Participantes do evento</h2>
+            <p id="eventParticipantsSubtitle">Jogadores participando agora.</p>
+          </div>
+          <button id="eventParticipantsClose" class="modal-close" type="button" aria-label="Fechar">×</button>
+        </div>
+        <div id="eventParticipantsList" class="participants-list"></div>
+      </article>
+    </div>
+
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
     <script src="script.js"></script>

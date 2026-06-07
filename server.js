@@ -7,7 +7,7 @@ import {
 import { pbkdf2Sync, randomBytes, timingSafeEqual } from "node:crypto";
 import { extname, join, normalize } from "node:path";
 import { createServer } from "node:http";
-import { MongoClient } from "mongodb";
+import { MongoClient, ObjectId } from "mongodb";
 
 const port = Number(process.env.PORT) || 3000;
 const host = "127.0.0.1";
@@ -76,7 +76,7 @@ function sendJson(response, status, data) {
   response.writeHead(status, {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "Content-Type",
-    "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+    "Access-Control-Allow-Methods": "GET,POST,DELETE,OPTIONS",
     "Content-Type": "application/json; charset=utf-8",
   });
   response.end(JSON.stringify(data));
@@ -126,6 +126,7 @@ function normalizeParticipant(participant) {
     eventTitle: participant.eventTitle,
     userId: participant.userId,
     username: participant.username,
+    avatarUrl: participant.avatarUrl || "",
     status: participant.status,
     joinedAt: participant.joinedAt,
     leftAt: participant.leftAt || null,
@@ -348,6 +349,63 @@ async function handleApi(request, response, pathname) {
       }
       const result = await db.collection("events").insertOne(event);
       sendJson(response, 201, normalizeEvent({ ...event, _id: result.insertedId }));
+      return true;
+    }
+
+    if (pathname === "/api/events" && request.method === "DELETE") {
+      const url = new URL(request.url, `http://localhost:${port}`);
+      const eventId = url.searchParams.get("id");
+      if (!eventId) {
+        sendJson(response, 400, { error: "ID do evento obrigatorio." });
+        return true;
+      }
+
+      if (!db) {
+        const data = await readDataFile();
+        data.events = data.events.filter((event) => event.id !== eventId);
+        data.event_participants = (data.event_participants || []).filter(
+          (participant) => participant.eventId !== eventId,
+        );
+        await writeDataFile(data);
+        sendJson(response, 200, { deleted: true });
+        return true;
+      }
+
+      const eventFilter = ObjectId.isValid(eventId)
+        ? { _id: new ObjectId(eventId) }
+        : { id: eventId };
+      const result = await db.collection("events").deleteOne(eventFilter);
+      await db.collection("event_participants").deleteMany({ eventId });
+      sendJson(response, 200, { deleted: result.deletedCount > 0 });
+      return true;
+    }
+
+    if (pathname === "/api/event-participants" && request.method === "GET") {
+      const url = new URL(request.url, `http://localhost:${port}`);
+      const eventId = url.searchParams.get("eventId");
+      if (!eventId) {
+        sendJson(response, 400, { error: "ID do evento obrigatorio." });
+        return true;
+      }
+
+      if (!db) {
+        const data = await readDataFile();
+        const participants = (data.event_participants || [])
+          .filter(
+            (participant) =>
+              participant.eventId === eventId && participant.status === "joined",
+          )
+          .sort((a, b) => new Date(b.joinedAt) - new Date(a.joinedAt));
+        sendJson(response, 200, participants.map(normalizeParticipant));
+        return true;
+      }
+
+      const participants = await db
+        .collection("event_participants")
+        .find({ eventId, status: "joined" })
+        .sort({ joinedAt: -1 })
+        .toArray();
+      sendJson(response, 200, participants.map(normalizeParticipant));
       return true;
     }
 
