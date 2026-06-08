@@ -18,6 +18,10 @@ let discordUser = discordSession?.user || {
   avatarInitial: "O",
   roles: [],
 };
+coins = Number(discordUser.coins) || 0;
+function getCurrentUserId() {
+  return discordUser.hubId || discordUser.id || null;
+}
 const owned = [];
 const equipped = {
   frame: null,
@@ -1261,11 +1265,28 @@ async function loadHubCoinUsers() {
     if (!response.ok) throw new Error("Usuarios indisponiveis");
     hubCoinUsers = await response.json();
     renderHubCoinUsers();
+    syncCurrentUserCoinsFromDb();
   } catch (error) {
     console.warn("API users:", error.message);
     hubCoinUsers = [];
     renderHubCoinUsers();
   }
+}
+
+function syncCurrentUserCoinsFromDb() {
+  const userId = getCurrentUserId();
+  if (!userId) return;
+  const user = hubCoinUsers.find(
+    (u) => u.id === userId || u.discordId === userId,
+  );
+  if (!user) return;
+  coins = Number(user.coins) || 0;
+  discordUser.coins = coins;
+  if (discordSession?.user) {
+    discordSession.user = discordUser;
+    localStorage.setItem("oneDiscordSession", JSON.stringify(discordSession));
+  }
+  updateBalances();
 }
 
 function askCoinAmount(user, action) {
@@ -1310,6 +1331,33 @@ async function updateUserCoins(userId, delta) {
   } catch (error) {
     console.warn("API users/coins:", error.message);
     showToast("Nao foi possivel atualizar os coins.");
+  }
+}
+
+function getCurrentUserCoins() {
+  return coins;
+}
+
+async function saveUserCoinDelta(delta) {
+  const userId = getCurrentUserId();
+  if (!userId || delta === 0) return;
+  try {
+    const response = await fetch(`${API_BASE}/api/users/coins`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, delta }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || "Falha ao salvar coins");
+    coins = Number(result.coins) || 0;
+    discordUser.coins = coins;
+    if (discordSession?.user) {
+      discordSession.user = discordUser;
+      localStorage.setItem("oneDiscordSession", JSON.stringify(discordSession));
+    }
+    updateBalances();
+  } catch (error) {
+    console.warn("saveUserCoinDelta:", error.message);
   }
 }
 
@@ -2310,6 +2358,7 @@ function renderShop() {
       coins -= item.price;
       owned.push(item);
       updateBalances();
+      saveUserCoinDelta(-item.price);
       renderShop();
       equipItem(item);
     });
@@ -2604,6 +2653,7 @@ function spinCasinoRoulette() {
 
   const result = getRouletteResult();
 
+  const coinsBefore = paymentMode === "coins" ? coins : 0;
   rouletteBusy = true;
   spinRoulette.disabled = true;
   spinRoulette.textContent = "Girando...";
@@ -2640,6 +2690,9 @@ function spinCasinoRoulette() {
     rouletteFeedback.innerHTML = outcome.message;
 
     updateBalances();
+    if (paymentMode === "coins") {
+      saveUserCoinDelta(coins - coinsBefore);
+    }
     renderRouletteHistory();
     renderInventory();
     rouletteBusy = false;
@@ -2814,6 +2867,7 @@ async function initApp() {
   await loadGlobalThemeFromApi();
   await loadShopProductsFromApi();
   await loadHubCoinUsers();
+  syncCurrentUserCoinsFromDb();
   await   loadEventsFromApi({ selectLatest: true });
   updateBalances();
   renderHubCards();
