@@ -160,6 +160,20 @@ const eventParticipantsList = document.querySelector("#eventParticipantsList");
 let rouletteSpins = 0;
 let rouletteBusy = false;
 let eventJoined = false;
+async function checkUserParticipation() {
+  if (!eventConfig?.id) return;
+  const userId = discordUser.id || discordUser.username || "anonymous";
+  try {
+    const response = await fetch(
+      `${API_BASE}/api/event-participants?eventId=${encodeURIComponent(eventConfig.id)}`,
+    );
+    if (!response.ok) return;
+    const participants = await response.json();
+    eventJoined = participants.some((p) => p.userId === userId);
+  } catch (error) {
+    console.warn("checkUserParticipation:", error.message);
+  }
+}
 let tickets = 0;
 let temporaryMultiplier = 1;
 let multiplierSpinsLeft = 0;
@@ -1059,13 +1073,13 @@ function renderHubCards() {
         <p>${config.description}</p>
       </div>
     `;
-    card.addEventListener("click", () => {
+    card.addEventListener("click", async () => {
       if (key === "live" && config.eventId) {
         const event = eventItems.find((item) => item.id === config.eventId);
         if (event) {
           setCurrentEvent(event);
           eventJoined = false;
-          renderEventContent();
+          await renderEventContent();
         }
       }
       window.location.hash = card.dataset.target;
@@ -1486,10 +1500,10 @@ function createPublicEventCard(config) {
   button.textContent = isEventClosed(config) ? "EVENTO ENCERRADO" : "Participar";
   button.disabled = isEventClosed(config);
 
-  const openEvent = () => {
+  const openEvent = async () => {
     setCurrentEvent(config);
     eventJoined = false;
-    renderEventContent();
+    await renderEventContent();
     window.location.hash = "event-detail";
   };
 
@@ -1641,7 +1655,7 @@ async function deleteEvent(config) {
       setCurrentEvent(eventItems[0]);
     }
     syncHubLiveWithLatestEvent();
-    renderEventContent();
+    await renderEventContent();
     showToast("Evento excluido do banco de dados.");
   } catch (error) {
     console.warn("API events:", error.message);
@@ -1660,7 +1674,7 @@ async function closeEvent(config) {
       setCurrentEvent(updatedConfig);
       eventJoined = false;
     }
-    renderEventContent();
+    await renderEventContent();
     showToast("Evento encerrado e salvo no banco de dados.");
   } catch (error) {
     console.warn("API events:", error.message);
@@ -1675,7 +1689,7 @@ async function closeEvent(config) {
           setCurrentEvent(updatedConfig);
           eventJoined = false;
         }
-        renderEventContent();
+        await renderEventContent();
         showToast("Evento encerrado e criado no banco de dados.");
         return;
       } catch (createError) {
@@ -1741,9 +1755,9 @@ function renderSettingsEventsRows() {
     actions.setAttribute("role", "cell");
     actions.className = "settings-event-actions";
     actions.append(
-      createIconButton("Editar evento", settingsEventActionIcons.edit, () => {
+      createIconButton("Editar evento", settingsEventActionIcons.edit, async () => {
         setCurrentEvent(config);
-        renderEventContent();
+        await renderEventContent();
         openEventEditModal();
       }),
       createIconButton("Encerrar evento", settingsEventActionIcons.close, () => {
@@ -1793,7 +1807,7 @@ function closeEventEditModal() {
   eventEditOverlay?.classList.add("hidden");
 }
 
-function applyEventEditForm() {
+async function applyEventEditForm() {
   if (!eventEditForm) return;
   eventConfig.title =
     eventEditForm.querySelector('[name="title"]').value.trim() ||
@@ -1816,11 +1830,11 @@ function applyEventEditForm() {
   eventConfig.detailDescription =
     eventEditForm.querySelector('[name="detailDescription"]').value.trim() ||
     eventConfig.detailDescription;
-  renderEventContent();
+  await renderEventContent();
   syncEventConfigForm();
 }
 
-function renderEventContent() {
+async function renderEventContent() {
   syncCurrentEventInList();
   syncHubLiveWithLatestEvent();
   eventDetailTitle.textContent = eventConfig.title;
@@ -1831,6 +1845,7 @@ function renderEventContent() {
   renderEventTags(eventDetailTags);
   renderEventDescription();
   renderSettingsEventsRows();
+  await checkUserParticipation();
   updateEventButtons();
   renderEventsList();
   renderHubCards();
@@ -2436,9 +2451,9 @@ eventParticipantsClose?.addEventListener("click", closeEventParticipantsModal);
 eventParticipantsOverlay?.addEventListener("click", (event) => {
   if (event.target === eventParticipantsOverlay) closeEventParticipantsModal();
 });
-eventEditForm?.addEventListener("submit", (event) => {
+eventEditForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
-  applyEventEditForm();
+  await applyEventEditForm();
   closeEventEditModal();
   showToast("Evento atualizado.");
 });
@@ -2799,10 +2814,10 @@ async function initApp() {
   await loadGlobalThemeFromApi();
   await loadShopProductsFromApi();
   await loadHubCoinUsers();
-  await loadEventsFromApi({ selectLatest: true });
+  await   loadEventsFromApi({ selectLatest: true });
   updateBalances();
   renderHubCards();
-  renderEventContent();
+  await renderEventContent();
   renderGameBanners();
   renderShop();
   renderInventory();
