@@ -2920,6 +2920,72 @@ h1 {
   line-height: 1.35;
 }
 
+.settings-inline-action {
+  width: fit-content;
+}
+
+.shop-product-editor-list {
+  display: grid;
+  gap: 14px;
+}
+
+.shop-product-edit-card {
+  display: grid;
+  grid-template-columns: 128px minmax(0, 1fr);
+  gap: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 14px;
+  background: var(--panel-soft);
+}
+
+.shop-product-edit-preview {
+  display: grid;
+  place-items: center;
+  min-height: 128px;
+  overflow: hidden;
+  border-radius: 12px;
+  color: #fff;
+  background: linear-gradient(145deg, var(--accent), #5ac8fa);
+  font-weight: 800;
+}
+
+.shop-product-edit-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.shop-product-edit-fields {
+  display: grid;
+  gap: 12px;
+}
+
+.shop-product-edit-fields label {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.shop-product-edit-fields input,
+.shop-product-edit-fields select,
+.shop-product-edit-fields textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 11px;
+  color: var(--text);
+  background: var(--panel);
+}
+
+.shop-product-edit-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
 .global-theme-preview {
   display: block;
   height: 78px;
@@ -2949,6 +3015,7 @@ h1 {
 
 .theme-preview-cartas-megan {
   background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='96' viewBox='0 0 220 96'%3E%3Cpath d='M12 72 C58 24 92 88 132 42 S188 18 210 56' fill='none' stroke='%239f111b' stroke-width='3' stroke-dasharray='7 7' opacity='.5'/%3E%3Cpath d='M54 65 h34 l-8 9 H62z M70 35 v30 M70 35 l18 16 H70z M70 40 l-16 14 h16z' fill='none' stroke='%237b3f24' stroke-width='3' stroke-linecap='round' stroke-linejoin='round' opacity='.48'/%3E%3C/svg%3E") center / cover no-repeat,
     radial-gradient(circle at 16% 70%, rgba(122, 7, 14, 0.8) 0 10%, transparent 11%),
     radial-gradient(circle at 86% 18%, rgba(73, 39, 18, 0.72) 0 13%, transparent 14%),
     linear-gradient(135deg, #f4dfc5 0%, #fff2df 44%, #8f0f17 100%);
@@ -3829,35 +3896,17 @@ body.hub-theme-cartas-megan {
   --violet: #7d1f2d;
   --shadow: 0 18px 50px rgba(88, 31, 16, 0.16);
   background:
-    radial-gradient(circle at 11% 24%, rgba(128, 12, 18, 0.16), transparent 23%),
-    radial-gradient(circle at 88% 18%, rgba(74, 39, 18, 0.18), transparent 21%),
-    radial-gradient(circle at 80% 82%, rgba(124, 12, 18, 0.2), transparent 24%),
-    linear-gradient(135deg, #ead2b4, #fff4df 42%, #d7b48b);
+    linear-gradient(rgba(241, 223, 200, 0.18), rgba(241, 223, 200, 0.18)),
+    url("https://r2.fivemanage.com/vLUsF9vzqBOo7DSFHERFX/imagem_2026-06-07_204712958.png") center top / cover fixed no-repeat,
+    #f1dfc8;
 }
 
 body.hub-theme-cartas-megan::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -2;
-  opacity: 0.32;
-  background:
-    repeating-linear-gradient(28deg, transparent 0 38px, rgba(122, 17, 22, 0.16) 39px 40px),
-    radial-gradient(circle at 52% 48%, transparent 0 18%, rgba(103, 52, 30, 0.12) 19% 20%, transparent 21%);
-  pointer-events: none;
+  display: none;
 }
 
 body.hub-theme-cartas-megan::after {
-  content: "";
-  position: fixed;
-  inset: auto 0 0 auto;
-  z-index: -1;
-  width: min(46vw, 620px);
-  height: min(46vw, 620px);
-  opacity: 0.2;
-  background: radial-gradient(circle, #7c1117 0 12%, transparent 13% 100%);
-  filter: blur(18px);
-  pointer-events: none;
+  display: none;
 }
 
 body.hub-theme-cartas-megan .topbar {

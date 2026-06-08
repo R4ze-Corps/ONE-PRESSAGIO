@@ -463,6 +463,10 @@
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22a1 1 0 0 1 0-20 10 9 0 0 1 10 9 5 5 0 0 1-5 5h-2.25a1.75 1.75 0 0 0-1.4 2.8l.3.4A1.75 1.75 0 0 1 12 22"/><circle cx="7.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="12" cy="7.5" r=".5" fill="currentColor"/><circle cx="16.5" cy="10.5" r=".5" fill="currentColor"/></svg>
                 Temas
               </button>
+              <button data-settings-tab="shop-create" type="button">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h8.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>
+                Shop
+              </button>
               <button data-settings-tab="changelogs" type="button">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 13h4"/><path d="M10 17h4"/></svg>
                 Changelogs
@@ -752,6 +756,7 @@
                   <h2>Criar Produtos</h2>
                   <p>Cadastre novos itens para aparecerem no Shop com categoria, raridade, banner, valor e quantidade.</p>
                 </div>
+                <button class="button secondary settings-inline-action" type="button" data-settings-open="shop-edit">Editar produtos existentes</button>
                 <form class="product-config">
                   <label>
                     Nome do produto
@@ -805,10 +810,7 @@
                   <h2>Editar Produtos</h2>
                   <p>Gerencie produtos publicados, estoque, preço, raridade e status de exibição.</p>
                 </div>
-                <div class="settings-placeholder">
-                  <strong>Editor de produtos</strong>
-                  <span>Lista de produtos do Shop pronta para a proxima etapa.</span>
-                </div>
+                <div id="shopProductEditorList" class="shop-product-editor-list"></div>
               </article>
             </div>
             </div>

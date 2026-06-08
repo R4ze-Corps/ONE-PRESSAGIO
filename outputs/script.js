@@ -59,6 +59,7 @@ const themeSubfilters = document.querySelector(".theme-subfilters");
 const toast = document.querySelector("#toast");
 const hubCards = document.querySelector("#hubCards");
 const shopGrid = document.querySelector("#shopGrid");
+const shopProductEditorList = document.querySelector("#shopProductEditorList");
 const inventoryList = document.querySelector("#inventoryList");
 const inventoryCount = document.querySelector("#inventoryCount");
 const inventoryBadge = document.querySelector("#inventoryBadge");
@@ -203,7 +204,7 @@ const settingsTabTitles = {
   "events-edit": "Editar Eventos",
   "games-status": "Games",
   "games-edit": "Editar game",
-  "shop-create": "Store",
+  "shop-create": "Shop",
   "shop-edit": "Editar Produtos",
 };
 const rouletteResults = [];
@@ -598,6 +599,7 @@ function showPage() {
   if (activeId === "settings") {
     updateSettingsAccessView();
     loadHubCoinUsers();
+    renderShopProductEditorList();
     syncSettingsForms();
     syncGameConfigForms();
     syncEventConfigForm();
@@ -1057,10 +1059,27 @@ function renderHubCards() {
       </div>
     `;
     card.addEventListener("click", () => {
+      if (key === "live" && config.eventId) {
+        const event = eventItems.find((item) => item.id === config.eventId);
+        if (event) {
+          setCurrentEvent(event);
+          eventJoined = false;
+          renderEventContent();
+        }
+      }
       window.location.hash = card.dataset.target;
     });
     hubCards.append(card);
   });
+}
+
+function syncHubLiveWithLatestEvent() {
+  const latestEvent = eventItems[0] || eventConfig;
+  hubConfig.live.target = "event-detail";
+  hubConfig.live.eventId = latestEvent.id;
+  hubConfig.live.title = latestEvent.title;
+  hubConfig.live.description = latestEvent.mainDescription;
+  hubConfig.live.imageUrl = latestEvent.bannerUrl;
 }
 
 function syncSettingsForms() {
@@ -1610,14 +1629,17 @@ async function deleteEvent(config) {
     await deleteEventFromApi(config.id);
     eventItems = eventItems.filter((event) => event.id !== config.id);
     if (!eventItems.length) {
+      syncHubLiveWithLatestEvent();
       renderEventsList();
       renderSettingsEventsRows();
+      renderHubCards();
       showToast("Evento excluido do banco de dados.");
       return;
     }
     if (eventConfig.id === config.id) {
       setCurrentEvent(eventItems[0]);
     }
+    syncHubLiveWithLatestEvent();
     renderEventContent();
     showToast("Evento excluido do banco de dados.");
   } catch (error) {
@@ -1632,6 +1654,7 @@ async function closeEvent(config) {
     const updatedConfig = apiEventToConfig(event);
     const itemIndex = eventItems.findIndex((item) => item.id === config.id);
     if (itemIndex >= 0) eventItems[itemIndex] = updatedConfig;
+    syncHubLiveWithLatestEvent();
     if (eventConfig.id === config.id) {
       setCurrentEvent(updatedConfig);
       eventJoined = false;
@@ -1646,6 +1669,7 @@ async function closeEvent(config) {
         const updatedConfig = apiEventToConfig(event);
         const itemIndex = eventItems.findIndex((item) => item.id === config.id);
         if (itemIndex >= 0) eventItems[itemIndex] = updatedConfig;
+        syncHubLiveWithLatestEvent();
         if (eventConfig.id === config.id) {
           setCurrentEvent(updatedConfig);
           eventJoined = false;
@@ -1797,6 +1821,7 @@ function applyEventEditForm() {
 
 function renderEventContent() {
   syncCurrentEventInList();
+  syncHubLiveWithLatestEvent();
   eventDetailTitle.textContent = eventConfig.title;
   eventDetailMainDescription.textContent = eventConfig.mainDescription;
   if (eventDetailStatus) eventDetailStatus.textContent = isEventClosed() ? "Encerrado" : "Ativo agora";
@@ -1807,11 +1832,6 @@ function renderEventContent() {
   renderSettingsEventsRows();
   updateEventButtons();
   renderEventsList();
-
-  hubConfig.live.target = "event-detail";
-  hubConfig.live.title = eventConfig.title;
-  hubConfig.live.description = eventConfig.mainDescription;
-  hubConfig.live.imageUrl = eventConfig.bannerUrl;
   renderHubCards();
 }
 
@@ -1827,10 +1847,12 @@ async function loadEventsFromApi({ selectLatest = false } = {}) {
     const events = await response.json();
     if (!Array.isArray(events) || !events.length) {
       eventItems = [{ ...eventConfig }];
+      syncHubLiveWithLatestEvent();
       renderEventsList();
       return;
     }
     eventItems = events.map(apiEventToConfig);
+    syncHubLiveWithLatestEvent();
     const selectedStillExists = eventItems.some(
       (event) => event.id === eventConfig.id,
     );
@@ -1839,6 +1861,7 @@ async function loadEventsFromApi({ selectLatest = false } = {}) {
   } catch (error) {
     console.warn("API events:", error.message);
     eventItems = [{ ...eventConfig }];
+    syncHubLiveWithLatestEvent();
     renderEventsList();
   }
 }
@@ -1951,6 +1974,7 @@ function apiProductToShopItem(product) {
 
   return {
     id: `api-${product.id}`,
+    apiId: product.id,
     name: product.name || buildProductName(type, rarity),
     desc:
       product.description ||
@@ -1971,12 +1995,13 @@ async function loadShopProductsFromApi() {
     const response = await fetch(`${API_BASE}/api/shop-products`);
     if (!response.ok) throw new Error("Produtos indisponiveis");
     const products = await response.json();
+    for (let index = shopItems.length - 1; index >= 0; index -= 1) {
+      if (shopItems[index].apiId) shopItems.splice(index, 1);
+    }
     products
-      .filter(
-        (product) => !shopItems.some((item) => item.id === `api-${product.id}`),
-      )
       .reverse()
       .forEach((product) => shopItems.unshift(apiProductToShopItem(product)));
+    renderShopProductEditorList();
   } catch (error) {
     console.warn("API shop-products:", error.message);
   }
@@ -1990,6 +2015,30 @@ async function saveProductToApi(data) {
   });
   if (!response.ok) throw new Error("Nao foi possivel salvar o produto");
   return apiProductToShopItem(await response.json());
+}
+
+async function updateProductInApi(productId, data) {
+  const response = await fetch(
+    `${API_BASE}/api/shop-products?id=${encodeURIComponent(productId)}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    },
+  );
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result.error || "Nao foi possivel atualizar.");
+  return apiProductToShopItem(result);
+}
+
+async function deleteProductFromApi(productId) {
+  const response = await fetch(
+    `${API_BASE}/api/shop-products?id=${encodeURIComponent(productId)}`,
+    { method: "DELETE" },
+  );
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result.error || "Nao foi possivel remover.");
+  return result;
 }
 
 function createShopProduct(data) {
@@ -2019,6 +2068,91 @@ function createShopProduct(data) {
   return item;
 }
 
+function renderShopProductEditorList() {
+  if (!shopProductEditorList) return;
+  const apiItems = shopItems.filter((item) => item.apiId);
+  shopProductEditorList.innerHTML = "";
+
+  if (!apiItems.length) {
+    const empty = document.createElement("div");
+    empty.className = "settings-placeholder";
+    empty.innerHTML = "<strong>Nenhum produto criado</strong><span>Crie um produto para editar aqui.</span>";
+    shopProductEditorList.append(empty);
+    return;
+  }
+
+  apiItems.forEach((item) => {
+    const form = document.createElement("form");
+    form.className = "shop-product-edit-card";
+    form.innerHTML = `
+      <div class="shop-product-edit-preview">
+        ${item.imageUrl ? `<img src="${item.imageUrl}" alt="" />` : `<span>${item.name.slice(0, 1)}</span>`}
+      </div>
+      <div class="shop-product-edit-fields">
+        <label>Nome<input name="name" type="text" value="${item.name.replace(/"/g, "&quot;")}" /></label>
+        <label>Descrição<textarea name="description" rows="2">${item.desc}</textarea></label>
+        <div class="form-row">
+          <label>Categoria
+            <select name="category">
+              <option value="fivem"${item.type === "fivem" ? " selected" : ""}>Fivem</option>
+              <option value="frame"${item.type === "frame" ? " selected" : ""}>Molduras</option>
+              <option value="theme"${item.type === "theme" ? " selected" : ""}>Temas</option>
+              <option value="title"${item.type === "title" ? " selected" : ""}>Tag</option>
+            </select>
+          </label>
+          <label>Raridade
+            <select name="rarity">
+              ${["common", "rare", "epic", "legendary", "ultra"]
+                .map((rarity) => `<option value="${rarity}"${item.rarity === getProductRarity(item.type, rarity) || item.rarity === rarity ? " selected" : ""}>${shopRarityLabels[rarity]}</option>`)
+                .join("")}
+            </select>
+          </label>
+          <label>Valor<input name="price" type="number" min="0" step="1" value="${item.price}" /></label>
+          <label>Quantidade<input name="quantity" type="number" min="1" step="1" value="${item.quantity || 1}" /></label>
+        </div>
+        <label>Banner<input name="bannerUrl" type="url" value="${(item.imageUrl || "").replace(/"/g, "&quot;")}" /></label>
+        <div class="shop-product-edit-actions">
+          <button class="button primary" type="submit">Salvar</button>
+          <button class="button secondary" type="button" data-remove-product>Remover</button>
+        </div>
+      </div>
+    `;
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const data = Object.fromEntries(new FormData(form).entries());
+      try {
+        const updated = await updateProductInApi(item.apiId, data);
+        const index = shopItems.findIndex((product) => product.apiId === item.apiId);
+        if (index >= 0) shopItems[index] = updated;
+        renderShop();
+        renderShopProductEditorList();
+        showToast("Produto atualizado no banco de dados.");
+      } catch (error) {
+        console.warn("API shop-products:", error.message);
+        showToast("Nao foi possivel atualizar o produto.");
+      }
+    });
+
+    form.querySelector("[data-remove-product]").addEventListener("click", async () => {
+      if (!window.confirm(`Remover "${item.name}" do Shop?`)) return;
+      try {
+        await deleteProductFromApi(item.apiId);
+        const index = shopItems.findIndex((product) => product.apiId === item.apiId);
+        if (index >= 0) shopItems.splice(index, 1);
+        renderShop();
+        renderShopProductEditorList();
+        showToast("Produto removido do banco de dados.");
+      } catch (error) {
+        console.warn("API shop-products:", error.message);
+        showToast("Nao foi possivel remover o produto.");
+      }
+    });
+
+    shopProductEditorList.append(form);
+  });
+}
+
 function bindProductConfigForm() {
   const form = document.querySelector(".product-config");
   if (!form) return;
@@ -2037,6 +2171,9 @@ function bindProductConfigForm() {
     try {
       shopItems.unshift(await saveProductToApi(productData));
       showToast("Produto salvo no MongoDB e adicionado ao Shop.");
+      form.reset();
+      form.querySelector('[name="price"]').value = "0";
+      form.querySelector('[name="quantity"]').value = "1";
     } catch (error) {
       console.warn("API shop-products:", error.message);
       createShopProduct(productData);
@@ -2044,6 +2181,7 @@ function bindProductConfigForm() {
     }
     activeShopFilter = "all";
     renderShop();
+    renderShopProductEditorList();
   });
 }
 
@@ -2541,6 +2679,9 @@ shopFilterButtons.forEach((button) => {
 settingsTabButtons.forEach((button) => {
   button.addEventListener("click", () => {
     showSettingsTab(button.dataset.settingsTab);
+    if (button.dataset.settingsTab === "shop-create") {
+      loadShopProductsFromApi();
+    }
   });
 });
 
@@ -2549,6 +2690,9 @@ settingsOpenButtons.forEach((button) => {
     showSettingsTab(button.dataset.settingsOpen);
     if (button.dataset.settingsOpen === "events-edit") {
       syncEventConfigForm();
+    }
+    if (button.dataset.settingsOpen === "shop-edit") {
+      loadShopProductsFromApi();
     }
   });
 });

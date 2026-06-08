@@ -249,6 +249,85 @@ async function handleApi(request, response, pathname) {
       return true;
     }
 
+    if (pathname === "/api/shop-products" && request.method === "PATCH") {
+      const url = new URL(request.url, `http://localhost:${port}`);
+      const body = await readJson(request);
+      const productId = url.searchParams.get("id") || body.id;
+      if (!productId) {
+        sendJson(response, 400, { error: "ID do produto obrigatorio." });
+        return true;
+      }
+
+      const updates = {};
+      if (typeof body.name === "string") updates.name = body.name;
+      if (typeof body.description === "string") updates.description = body.description;
+      if (typeof body.category === "string") updates.category = body.category;
+      if (typeof body.rarity === "string") updates.rarity = body.rarity;
+      if (typeof body.bannerUrl === "string") updates.bannerUrl = body.bannerUrl;
+      if (body.price !== undefined)
+        updates.price = Math.max(0, Number(body.price) || 0);
+      if (body.quantity !== undefined)
+        updates.quantity = Math.max(1, Number(body.quantity) || 1);
+      updates.updatedAt = new Date();
+
+      if (!db) {
+        const data = await readDataFile();
+        const product = (data.shop_products || []).find(
+          (item) => item.id === productId,
+        );
+        if (!product) {
+          sendJson(response, 404, { error: "Produto nao encontrado." });
+          return true;
+        }
+        Object.assign(product, updates);
+        await writeDataFile(data);
+        sendJson(response, 200, normalizeProduct(product));
+        return true;
+      }
+
+      const filter = ObjectId.isValid(productId)
+        ? { _id: new ObjectId(productId) }
+        : { id: productId };
+      const result = await db
+        .collection("shop_products")
+        .findOneAndUpdate(filter, { $set: updates }, { returnDocument: "after" });
+      if (!result) {
+        sendJson(response, 404, { error: "Produto nao encontrado." });
+        return true;
+      }
+      sendJson(response, 200, normalizeProduct(result));
+      return true;
+    }
+
+    if (pathname === "/api/shop-products" && request.method === "DELETE") {
+      const url = new URL(request.url, `http://localhost:${port}`);
+      const productId = url.searchParams.get("id");
+      if (!productId) {
+        sendJson(response, 400, { error: "ID do produto obrigatorio." });
+        return true;
+      }
+
+      if (!db) {
+        const data = await readDataFile();
+        const product = (data.shop_products || []).find(
+          (item) => item.id === productId,
+        );
+        if (product) product.isActive = false;
+        await writeDataFile(data);
+        sendJson(response, 200, { deleted: Boolean(product) });
+        return true;
+      }
+
+      const filter = ObjectId.isValid(productId)
+        ? { _id: new ObjectId(productId) }
+        : { id: productId };
+      const result = await db
+        .collection("shop_products")
+        .updateOne(filter, { $set: { isActive: false, updatedAt: new Date() } });
+      sendJson(response, 200, { deleted: result.modifiedCount > 0 });
+      return true;
+    }
+
     if (pathname === "/api/users" && request.method === "GET") {
       if (!db) {
         const data = await readDataFile();
