@@ -421,7 +421,8 @@ const gameConfig = {
     title: "Roleta ONE",
     description:
       "Aposte em azul, branco ou preto em uma roleta limpa estilo cassino.",
-    imageUrl: "",
+    imageUrl:
+      "https://r2.fivemanage.com/vLUsF9vzqBOo7DSFHERFX/ChatGPTImage3dejun.de202610_01_03.png",
   },
 };
 
