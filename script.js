@@ -2838,6 +2838,19 @@ usersDirectoryTabs.forEach((button) => {
 });
 discordTokenForm?.addEventListener("submit", saveDiscordBotToken);
 
+const devModeToggle = document.getElementById("devModeToggle");
+if (devModeToggle) {
+  devModeToggle.addEventListener("click", () => {
+    document.body.classList.toggle("developer-mode");
+    const isDev = document.body.classList.contains("developer-mode");
+    if (isDev) {
+      showToast("Modo Developer ativado.");
+    } else {
+      showToast("Modo Developer desativado.");
+    }
+  });
+}
+
 themeToggle.addEventListener("click", () => {
   document.body.classList.toggle("dark-mode");
   const isDark = document.body.classList.contains("dark-mode");

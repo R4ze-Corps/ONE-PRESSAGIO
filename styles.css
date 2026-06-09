@@ -226,6 +226,54 @@ button {
   height: 17px;
 }
 
+.dev-mode-fab {
+  position: fixed;
+  left: 16px;
+  bottom: 24px;
+  z-index: 100;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 18px;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  background: var(--panel);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.04);
+  font-size: 0.82rem;
+  font-weight: 650;
+  white-space: nowrap;
+  transition: color 160ms ease, transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  cursor: pointer;
+}
+
+.dev-mode-fab:hover {
+  color: var(--text);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.dev-mode-fab svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+body.developer-mode .dev-mode-fab {
+  color: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 3px 12px rgba(0, 113, 227, 0.15);
+}
+
+body.developer-mode .dev-mode-fab:hover {
+  box-shadow: 0 8px 24px rgba(0, 113, 227, 0.22);
+}
+
+body.auth-locked .dev-mode-fab {
+  display: none;
+}
+
 .account-copy {
   display: grid;
   gap: 2px;
@@ -4021,6 +4069,20 @@ body.dark-mode .game-symbol.red {
 
 body.dark-mode .game-symbol.green {
   background: #13351f;
+}
+
+body.dark-mode .dev-mode-fab {
+  background: var(--panel);
+  border-color: var(--line);
+}
+
+body.dark-mode .dev-mode-fab:hover {
+  color: var(--text);
+}
+
+body.dark-mode.developer-mode .dev-mode-fab {
+  color: var(--accent);
+  border-color: var(--accent);
 }
 
 body.dark-mode .toast {
