@@ -44,6 +44,23 @@ export default async function handler(request, response) {
       return;
     }
 
+    if (request.method === "POST" && request.query?.action === "coins") {
+      const db = await getDb();
+      const body = request.body || {};
+      const userId = body.userId;
+      const delta = Number(body.delta) || 0;
+      if (!userId) { response.status(400).json({ error: "ID do usuario obrigatorio." }); return; }
+
+      const filter = ObjectId.isValid(userId) ? { _id: new ObjectId(userId) } : { id: userId };
+      const current = await db.collection("users").findOne(filter);
+      if (!current) { response.status(404).json({ error: "Usuario nao encontrado." }); return; }
+
+      const nextCoins = Math.max(0, (Number(current.coins) || 0) + delta);
+      await db.collection("users").updateOne(filter, { $set: { coins: nextCoins } });
+      response.status(200).json(publicUser({ ...current, coins: nextCoins }));
+      return;
+    }
+
     if (request.method !== "POST") {
       response.setHeader("Allow", "GET, POST");
       response.status(405).json({ error: "Metodo nao permitido" });

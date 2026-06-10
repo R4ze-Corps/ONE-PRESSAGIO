@@ -169,7 +169,7 @@ async function checkUserParticipation() {
   const userId = discordUser.id || discordUser.username || "anonymous";
   try {
     const response = await fetch(
-      `${API_BASE}/api/event-participants?eventId=${encodeURIComponent(eventConfig.id)}`,
+      `${API_BASE}/api/events?action=participants&eventId=${encodeURIComponent(eventConfig.id)}`,
     );
     if (!response.ok) return;
     const participants = await response.json();
@@ -821,7 +821,7 @@ function renderUserDirectoryList() {
 async function fetchUsersDirectory() {
   const [hubResponse, discordResponse] = await Promise.all([
     fetch(`${API_BASE}/api/users`),
-    fetch(`${API_BASE}/api/discord-users`),
+    fetch(`${API_BASE}/api/discord?action=users`),
   ]);
   const hubUsers = hubResponse.ok ? await hubResponse.json() : [];
   const discordUsers = discordResponse.ok ? await discordResponse.json() : [];
@@ -888,7 +888,7 @@ async function saveDiscordBotToken(event) {
   const button = discordTokenForm.querySelector("button");
   if (button) button.disabled = true;
   try {
-    const response = await fetch(`${API_BASE}/api/discord-token`, {
+    const response = await fetch(`${API_BASE}/api/discord?action=token`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token }),
@@ -1308,7 +1308,7 @@ function askCoinAmount(user, action) {
 
 async function updateUserCoins(userId, delta) {
   try {
-    const response = await fetch(`${API_BASE}/api/users/coins`, {
+    const response = await fetch(`${API_BASE}/api/users?action=coins`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId, delta }),
@@ -1342,7 +1342,7 @@ async function saveUserCoinDelta(delta) {
   const userId = getCurrentUserId();
   if (!userId || delta === 0) return;
   try {
-    const response = await fetch(`${API_BASE}/api/users/coins`, {
+    const response = await fetch(`${API_BASE}/api/users?action=coins`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId, delta }),
@@ -1618,7 +1618,7 @@ function renderParticipantsModal(config, participants) {
 
 async function fetchEventParticipants(eventId) {
   const response = await fetch(
-    `${API_BASE}/api/event-participants?eventId=${encodeURIComponent(eventId)}`,
+    `${API_BASE}/api/events?action=participants&eventId=${encodeURIComponent(eventId)}`,
   );
   if (!response.ok) throw new Error("Nao foi possivel carregar inscritos");
   return response.json();
@@ -1939,7 +1939,7 @@ async function devNotifyNewEvent(eventTitle) {
       color: 0xf97316,
       timestamp: new Date().toISOString(),
     };
-    await fetch(`${API_BASE}/api/discord-notify`, {
+    await fetch(`${API_BASE}/api/discord?action=notify`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId: testUserId, embeds: [embed] }),
@@ -2475,7 +2475,7 @@ function updateEventButtons() {
 }
 
 async function saveEventParticipation(joined) {
-  const response = await fetch(`${API_BASE}/api/event-participants`, {
+  const response = await fetch(`${API_BASE}/api/events?action=participants`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -3203,21 +3203,21 @@ let devDiscordConfig = {};
 
 async function devFetchRoles() {
   try {
-    const res = await fetch(`${API_BASE}/api/discord-roles`);
+    const res = await fetch(`${API_BASE}/api/discord?action=roles`);
     if (res.ok) devDiscordRoles = await res.json();
   } catch (_) { devDiscordRoles = []; }
 }
 
 async function devFetchChannels() {
   try {
-    const res = await fetch(`${API_BASE}/api/discord-channels`);
+    const res = await fetch(`${API_BASE}/api/discord?action=channels`);
     if (res.ok) devDiscordChannels = await res.json();
   } catch (_) { devDiscordChannels = []; }
 }
 
 async function devLoadDiscordConfig() {
   try {
-    const res = await fetch(`${API_BASE}/api/discord-config`);
+    const res = await fetch(`${API_BASE}/api/discord?action=config`);
     if (res.ok) devDiscordConfig = await res.json();
   } catch (_) { devDiscordConfig = {}; }
 }
@@ -3317,7 +3317,7 @@ async function devSaveDiscordConfig() {
     return;
   }
   try {
-    const res = await fetch(`${API_BASE}/api/discord-config`, {
+    const res = await fetch(`${API_BASE}/api/discord?action=config`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ registroRoleId, aprovadoRoleId, geralRoleId, logChannelId }),

@@ -3,38 +3,22 @@ import { createReadStream, existsSync, promises as fs } from "node:fs";
 import { extname, join, normalize, relative } from "node:path";
 import { createServer } from "node:http";
 
-import discordTokenHandler from "./api/discord-token.js";
-import discordUsersHandler from "./api/discord-users.js";
-import discordRolesHandler from "./api/discord-roles.js";
-import discordChannelsHandler from "./api/discord-channels.js";
-import discordConfigHandler from "./api/discord-config.js";
-import discordNotifyHandler from "./api/discord-notify.js";
-import eventParticipantsHandler from "./api/event-participants.js";
+import discordHandler from "./api/discord.js";
 import eventsHandler from "./api/events.js";
-import latestEventHandler from "./api/events/latest.js";
 import shopProductsHandler from "./api/shop-products.js";
 import siteSettingsHandler from "./api/site-settings.js";
 import usersHandler from "./api/users.js";
-import userCoinsHandler from "./api/users/coins.js";
 
 const port = Number(process.env.PORT) || 3000;
 const host = "127.0.0.1";
 const root = process.cwd();
 
 const apiRoutes = new Map([
-  ["/api/discord-token", discordTokenHandler],
-  ["/api/discord-users", discordUsersHandler],
-  ["/api/discord-roles", discordRolesHandler],
-  ["/api/discord-channels", discordChannelsHandler],
-  ["/api/discord-config", discordConfigHandler],
-  ["/api/discord-notify", discordNotifyHandler],
-  ["/api/event-participants", eventParticipantsHandler],
+  ["/api/discord", discordHandler],
   ["/api/events", eventsHandler],
-  ["/api/events/latest", latestEventHandler],
   ["/api/shop-products", shopProductsHandler],
   ["/api/site-settings", siteSettingsHandler],
   ["/api/users", usersHandler],
-  ["/api/users/coins", userCoinsHandler],
 ]);
 
 const contentTypes = {
