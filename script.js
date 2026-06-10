@@ -2859,18 +2859,25 @@ discordTokenForm?.addEventListener("submit", saveDiscordBotToken);
 const navDevMode = document.getElementById("navDevMode");
 if (navDevMode) {
   navDevMode.addEventListener("click", () => {
-    const isDev = document.body.classList.toggle("developer-mode");
-    navDevMode.classList.toggle("active", isDev);
-    if (isDev) {
-      showToast("Modo Developer ativado.");
-      if (sessionStorage.getItem('dev_logged_in') === 'true') {
-        devBypassLogin();
-      }
-    } else {
+    if (document.body.classList.contains("developer-mode")) {
+      document.body.classList.remove("developer-mode");
+      navDevMode.classList.remove("active");
       showToast("Modo Developer desativado.");
       document.getElementById("dev-login-screen")?.classList.remove("scale-105", "opacity-0", "pointer-events-none");
       document.getElementById("dev-main-panel")?.classList.add("hidden");
       document.documentElement.classList.remove("dark");
+      return;
+    }
+    const senha = prompt("🔐 Digite a senha de desenvolvedor:");
+    if (senha !== "1507") {
+      if (senha !== null) showToast("Senha incorreta.", true);
+      return;
+    }
+    document.body.classList.add("developer-mode");
+    navDevMode.classList.add("active");
+    showToast("Modo Developer ativado.");
+    if (sessionStorage.getItem('dev_logged_in') === 'true') {
+      devBypassLogin();
     }
   });
 }
