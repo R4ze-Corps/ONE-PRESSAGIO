@@ -4674,3 +4674,44 @@ body.developer-mode #developer-ui {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* ---------- config sidebar ---------- */
+.config-sidebar-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #52525b;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s;
+}
+.dark .config-sidebar-btn {
+  color: #a1a1aa;
+}
+.config-sidebar-btn:hover {
+  background: #e4e4e7;
+  color: #18181b;
+}
+.dark .config-sidebar-btn:hover {
+  background: #27272a;
+  color: #e4e4e7;
+}
+.config-sidebar-btn.active {
+  background: #f97316;
+  color: #fff;
+}
+.dark .config-sidebar-btn.active {
+  background: #f97316;
+  color: #fff;
+}
+
+.config-panel {
+  animation: dev-fade-in 0.2s ease-out both;
+}

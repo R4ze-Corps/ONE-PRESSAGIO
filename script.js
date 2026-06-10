@@ -3170,7 +3170,17 @@ document.addEventListener('click', function devClickOutside(e) {
 async function devShowBlockOverlay() {
   const overlay = document.getElementById('dev-block-overlay');
   if (overlay) overlay.classList.remove('hidden');
+  devSwitchConfigTab('registrar');
   await devPopulateDiscordMembers();
+}
+
+function devSwitchConfigTab(tab) {
+  document.querySelectorAll('.config-panel').forEach(el => el.classList.add('hidden'));
+  document.querySelectorAll('.config-sidebar-btn').forEach(el => el.classList.remove('active'));
+  const panel = document.getElementById(`dev-config-panel-${tab}`);
+  if (panel) panel.classList.remove('hidden');
+  const btn = document.getElementById(`dev-config-btn-${tab}`);
+  if (btn) btn.classList.add('active');
 }
 
 function devSubmitRegisto(e) {
