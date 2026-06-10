@@ -138,6 +138,7 @@ const server = createServer(async (request, response) => {
 
   response.writeHead(200, {
     "Access-Control-Allow-Origin": "*",
+    "Cache-Control": "no-cache, no-store, must-revalidate",
     "Content-Type": contentTypes[extname(filePath)] || "application/octet-stream",
   });
   createReadStream(filePath)
