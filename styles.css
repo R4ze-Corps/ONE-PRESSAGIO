@@ -4542,3 +4542,135 @@ body.developer-mode {
 body.developer-mode #developer-ui {
   overflow-y: auto;
 }
+
+/* ---------- dev custom select / autocomplete ---------- */
+.dev-select-trigger {
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.dev-select-trigger:hover {
+  border-color: #f97316 !important;
+}
+.dev-select-trigger:focus-visible {
+  outline: 2px solid #f97316;
+  outline-offset: 2px;
+}
+
+.dev-dropdown-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  max-height: 260px;
+  display: flex;
+  flex-direction: column;
+}
+.dark .dev-dropdown-panel {
+  background: #18181b;
+  border-color: #27272a;
+}
+
+.dev-dropdown-search {
+  margin: 8px;
+  padding: 8px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 13px;
+  background: #f9fafb;
+  outline: none;
+  flex-shrink: 0;
+}
+.dark .dev-dropdown-search {
+  background: #09090b;
+  border-color: #27272a;
+  color: #e4e4e7;
+}
+.dev-dropdown-search:focus {
+  border-color: #f97316;
+}
+
+.dev-dropdown-options {
+  overflow-y: auto;
+  flex: 1;
+  padding: 0 4px 4px;
+}
+.dev-dropdown-options::-webkit-scrollbar { width: 4px; }
+.dev-dropdown-options::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 4px; }
+.dark .dev-dropdown-options::-webkit-scrollbar-thumb { background: #3f3f46; }
+
+.dev-member-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-size: 13px;
+  color: #18181b;
+  transition: background 0.1s;
+}
+.dark .dev-member-item {
+  color: #e4e4e7;
+}
+.dev-member-item:hover {
+  background: #f4f4f5;
+}
+.dark .dev-member-item:hover {
+  background: #27272a;
+}
+
+.dev-member-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.dev-avatar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f97316;
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+}
+.dev-member-name {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* small avatar in trigger button */
+.dev-member-avatar-sm {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.dev-avatar-placeholder-sm {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f97316;
+  color: #fff;
+  font-weight: 700;
+  font-size: 11px;
+}
+.dev-member-name-sm {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

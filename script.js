@@ -3042,30 +3042,129 @@ function devFormatPhone(input) {
 }
 
 /* ---------- populate Discord members in registration form ---------- */
+let devDiscordMembers = [];
+
 async function devPopulateDiscordMembers() {
   const select = document.getElementById('dev-modal-recruiter');
-  const datalist = document.getElementById('dev-discord-members');
-  if (!select && !datalist) return;
+  const optionsContainer = document.getElementById('dev-recruiter-options');
+  const suggestionsContainer = document.getElementById('dev-indicated-suggestions');
+  if (!select && !optionsContainer && !suggestionsContainer) return;
   if (!usersDirectoryData.hubUsers.length && !usersDirectoryData.discordOnly.length) {
     try { await fetchUsersDirectory(); } catch (_) {}
   }
-  const members = [];
   const allUsers = [...(usersDirectoryData?.hubUsers || []), ...(usersDirectoryData?.discordOnly || [])];
-  const seen = new Set();
+  const seen = new Map();
   allUsers.forEach(u => {
     const name = u.username || u.name || '';
-    if (name && !seen.has(name)) { seen.add(name); members.push(name); }
+    if (name && !seen.has(name)) {
+      seen.set(name, { name, avatarUrl: u.avatarUrl || '' });
+    }
   });
-  if (members.length === 0) {
-    members.push('@Admin', '@Dono', '@Mod', '@Sub-Dono');
+  devDiscordMembers = [...seen.values()];
+  if (devDiscordMembers.length === 0) {
+    devDiscordMembers = [
+      { name: '@Admin', avatarUrl: '' },
+      { name: '@Dono', avatarUrl: '' },
+      { name: '@Mod', avatarUrl: '' },
+      { name: '@Sub-Dono', avatarUrl: '' },
+    ];
   }
   if (select) {
-    select.innerHTML = '<option value="">Selecionar...</option>' + members.map(m => `<option value="${m}">${m}</option>`).join('');
+    select.innerHTML = '<option value="">Selecionar...</option>' + devDiscordMembers.map(m => `<option value="${m.name}">${m.name}</option>`).join('');
   }
-  if (datalist) {
-    datalist.innerHTML = members.map(m => `<option value="${m}">`).join('');
+  renderRecruiterOptions(devDiscordMembers);
+  renderIndicatedSuggestions(devDiscordMembers);
+}
+
+function renderRecruiterOptions(list) {
+  const container = document.getElementById('dev-recruiter-options');
+  if (!container) return;
+  container.innerHTML = list.map(m => `
+    <button type="button" class="dev-member-item" data-value="${m.name}" onclick="devSelectRecruiter('${m.name.replace(/'/g, "\\'")}')">
+      ${m.avatarUrl ? `<img class="dev-member-avatar" src="${m.avatarUrl}" alt="" loading="lazy">` : `<div class="dev-member-avatar dev-avatar-placeholder">${m.name.charAt(0).toUpperCase()}</div>`}
+      <span class="dev-member-name">${m.name}</span>
+    </button>
+  `).join('');
+}
+
+function renderIndicatedSuggestions(list) {
+  const container = document.getElementById('dev-indicated-suggestions');
+  if (!container) return;
+  if (list.length === 0) { container.classList.add('hidden'); container.innerHTML = ''; return; }
+  container.innerHTML = list.map(m => `
+    <button type="button" class="dev-member-item" data-value="${m.name}" onmousedown="event.preventDefault(); devSelectIndicated('${m.name.replace(/'/g, "\\'")}')">
+      ${m.avatarUrl ? `<img class="dev-member-avatar" src="${m.avatarUrl}" alt="" loading="lazy">` : `<div class="dev-member-avatar dev-avatar-placeholder">${m.name.charAt(0).toUpperCase()}</div>`}
+      <span class="dev-member-name">${m.name}</span>
+    </button>
+  `).join('');
+  container.classList.remove('hidden');
+}
+
+/* ---------- recruiter dropdown ---------- */
+function devToggleRecruiterDropdown() {
+  const panel = document.getElementById('dev-recruiter-dropdown');
+  if (!panel) return;
+  panel.classList.toggle('hidden');
+  if (!panel.classList.contains('hidden')) {
+    document.getElementById('dev-recruiter-search').value = '';
+    renderRecruiterOptions(devDiscordMembers);
+    document.getElementById('dev-recruiter-search')?.focus();
   }
 }
+
+function devFilterRecruiter(query) {
+  const q = query.toLowerCase().trim();
+  const filtered = q ? devDiscordMembers.filter(m => m.name.toLowerCase().includes(q)) : devDiscordMembers;
+  renderRecruiterOptions(filtered);
+}
+
+function devSelectRecruiter(name) {
+  document.getElementById('dev-modal-recruiter').value = name;
+  const trigger = document.getElementById('dev-recruiter-value');
+  if (trigger) {
+    const member = devDiscordMembers.find(m => m.name === name);
+    const avatarHtml = member?.avatarUrl
+      ? `<img class="dev-member-avatar-sm" src="${member.avatarUrl}" alt="">`
+      : `<div class="dev-member-avatar-sm dev-avatar-placeholder-sm">${name.charAt(0).toUpperCase()}</div>`;
+    trigger.innerHTML = `${avatarHtml}<span class="dev-member-name-sm">${name}</span>`;
+    trigger.className = 'flex-1 flex items-center gap-2 text-sm text-black dark:text-white';
+  }
+  document.getElementById('dev-recruiter-dropdown')?.classList.add('hidden');
+}
+
+/* ---------- indicated autocomplete ---------- */
+function devFilterIndicated(query) {
+  const container = document.getElementById('dev-indicated-suggestions');
+  if (!container) return;
+  const q = query.toLowerCase().trim();
+  if (!q) { renderIndicatedSuggestions(devDiscordMembers); return; }
+  const filtered = devDiscordMembers.filter(m => m.name.toLowerCase().includes(q));
+  renderIndicatedSuggestions(filtered);
+}
+
+function devShowIndicatedSuggestions() {
+  const container = document.getElementById('dev-indicated-suggestions');
+  if (!container) return;
+  renderIndicatedSuggestions(devDiscordMembers);
+}
+
+function devHideIndicatedSuggestions() {
+  const container = document.getElementById('dev-indicated-suggestions');
+  if (container) container.classList.add('hidden');
+}
+
+function devSelectIndicated(name) {
+  const input = document.getElementById('dev-modal-indicated');
+  if (input) input.value = name;
+  devHideIndicatedSuggestions();
+}
+
+/* ---------- close dropdown on outside click ---------- */
+document.addEventListener('click', function devClickOutside(e) {
+  const wrapper = document.getElementById('dev-recruiter-wrapper');
+  const panel = document.getElementById('dev-recruiter-dropdown');
+  if (panel && wrapper && !wrapper.contains(e.target)) panel.classList.add('hidden');
+});
 
 async function devShowBlockOverlay() {
   const overlay = document.getElementById('dev-block-overlay');
