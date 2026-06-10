@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>One Games | Portal Oficial</title>
     <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: { extend: { colors: { iosBg: { light: '#f5f5f7', dark: '#05070d' }, iosCard: { light: '#ffffff', dark: '#11141b' }, iosBlue: '#0071e3', iosGreen: '#30d158', iosRed: '#ff3b30', iosOrange: '#f5c518', iosGray: '#6e6e73' } } }
+      }
+    </script>
   </head>
   <body class="auth-locked">
     <header class="topbar">
@@ -23,6 +31,15 @@
             <a href="#games">Games</a>
             <a href="#shop">Shop</a>
             <a href="#settings">Ajustes</a>
+            <button id="navDevMode" class="nav-dev-mode" type="button" aria-label="Modo Developer">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15.686 15A14.5 14.5 0 0 1 12 22a14.5 14.5 0 0 1 0-20 10 10 0 1 0 9.542 13"/>
+                <path d="M2 12h8.5"/>
+                <path d="M20 6V4a2 2 0 1 0-4 0v2"/>
+                <rect width="8" height="5" x="14" y="6" rx="1"/>
+              </svg>
+              <span>Developer</span>
+            </button>
           </nav>
           <div class="topbar-actions">
             <div class="topbar-account" aria-label="Perfil">
@@ -55,16 +72,6 @@
         </div>
       </div>
     </header>
-
-    <button id="devModeToggle" class="dev-mode-fab" type="button" aria-label="Modo Developer">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M15.686 15A14.5 14.5 0 0 1 12 22a14.5 14.5 0 0 1 0-20 10 10 0 1 0 9.542 13"/>
-        <path d="M2 12h8.5"/>
-        <path d="M20 6V4a2 2 0 1 0-4 0v2"/>
-        <rect width="8" height="5" x="14" y="6" rx="1"/>
-      </svg>
-      <span>Modo Developer</span>
-    </button>
 
     <main>
       <section id="login" class="page active">
@@ -118,10 +125,9 @@
 
       <section id="home" class="page">
         <div class="hero-clean">
-          <p class="eyebrow">One Games</p>
-          <h1>Jogue.<br />Compita. Conquiste.</h1>
+          <h1 class="eyebrow">SEU HUB<br />SUA JORNADA<br />SEU CONTROLE</h1>
           <p>
-            O ecossistema de mini games da ONE. Ganhe ONE COIN, participe de eventos especiais e personalize seu perfil com itens exclusivos.
+            e tenha acesso a evento, jogos, loja e recursos exclusivos em só lugar.
           </p>
           <div class="hero-actions">
             <a class="button primary icon-button" href="#games">
@@ -932,6 +938,415 @@
     </aside>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <!-- DEV MODE UI -->
+    <div id="developer-ui">
+      <!-- LOGIN SCREEN -->
+      <div id="dev-login-screen" class="fixed inset-0 z-[100] flex flex-col items-center justify-between py-12 px-4 transition-all duration-700 ease-in-out bg-cover bg-center bg-no-repeat">
+        <div class="absolute inset-0 bg-black/45 dark:bg-black/60 mac-blur-deep z-0"></div>
+        <div class="relative z-10 text-center text-white space-y-1">
+          <p id="dev-lock-time" class="text-7xl font-extralight tracking-tight">--:--</p>
+          <p id="dev-lock-date" class="text-lg font-light opacity-90">carregando...</p>
+        </div>
+        <div class="relative z-10 w-full max-w-sm flex flex-col items-center">
+          <div class="relative w-24 h-24 mb-4 rounded-full p-1 bg-white/20 dark:bg-zinc-800/30 border border-white/30 shadow-2xl flex items-center justify-center">
+            <div class="w-full h-full rounded-full overflow-hidden bg-gradient-to-tr from-iosBlue to-indigo-600 flex items-center justify-center text-white">
+              <i data-lucide="user" class="w-12 h-12 text-white"></i>
+            </div>
+            <span class="absolute bottom-1 right-1 w-5 h-5 rounded-full border-4 border-[#08080A] bg-iosGreen"></span>
+          </div>
+          <h2 class="text-white font-semibold text-lg tracking-tight mb-6">Developer Console</h2>
+          <form onsubmit="devLogin(event)" class="w-full relative max-w-[260px]">
+            <div class="relative flex items-center bg-white/10 dark:bg-black/25 border border-white/25 dark:border-zinc-800/40 rounded-full pl-4 pr-1 py-1.5 shadow-lg focus-within:ring-2 focus-within:ring-iosBlue focus-within:border-transparent">
+              <input type="password" id="dev-login-password" placeholder="Palavra-passe" class="w-full bg-transparent text-white border-0 text-xs focus:outline-none placeholder-white/55">
+              <button type="submit" class="w-7 h-7 bg-white/25 dark:bg-zinc-800/65 hover:bg-white/35 rounded-full flex items-center justify-center text-white active:scale-90 transition-transform">
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </form>
+          <p id="dev-login-error" class="text-iosRed text-xs font-semibold mt-3 opacity-0 transition-opacity duration-200">Credencial incorreta.</p>
+          <p class="text-center text-[10px] text-white/45 mt-3 tracking-wide">Dica: use <span class="font-semibold text-white/65">membro</span> para aceder</p>
+        </div>
+        <div class="relative z-10">
+          <button onclick="devBypassLogin()" class="flex flex-col items-center space-y-1.5 text-white/70 hover:text-white transition-colors text-xs font-medium">
+            <div class="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center">
+              <i data-lucide="sparkles" class="w-4.5 h-4.5"></i>
+            </div>
+            <span>Entrada Rápida</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- MAIN PANEL -->
+      <div id="dev-main-panel" class="hidden flex-1 flex flex-col pt-28 min-h-screen bg-[#F2F2F7] dark:bg-[#08080A] text-black dark:text-zinc-100 transition-colors duration-300">
+        <!-- NAVBAR FLUTUANTE -->
+        <div class="fixed top-4 left-4 right-4 z-50 max-w-7xl mx-auto">
+          <header class="bg-white/80 dark:bg-[#121214]/85 mac-blur border border-gray-200/50 dark:border-zinc-800/60 rounded-2xl px-6 py-3.5 shadow-xl flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="w-9 h-9 bg-gradient-to-tr from-iosBlue to-indigo-600 rounded-xl flex items-center justify-center text-white font-extrabold shadow-md shadow-iosBlue/20">
+                <i data-lucide="shield" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h1 class="font-bold text-sm tracking-tight leading-none">Member Gateway</h1>
+                <span id="dev-member-tag" class="text-[10px] text-iosOrange font-medium flex items-center gap-1 mt-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-iosOrange inline-block animate-pulse"></span>
+                  Modo Developer
+                </span>
+              </div>
+            </div>
+            <nav class="flex items-center bg-gray-100 dark:bg-zinc-900/80 p-1 rounded-xl border border-gray-200/20 dark:border-zinc-800/30">
+              <button onclick="devSwitchTab('hub')" id="dev-btn-tab-hub" class="tab-transition flex items-center space-x-2 px-5 py-2 rounded-lg text-xs font-semibold text-iosBlue dark:text-white bg-white dark:bg-zinc-800 shadow-sm">
+                <i data-lucide="layout-dashboard" class="w-4 h-4"></i><span>HUB</span>
+              </button>
+              <button onclick="devSwitchTab('controle')" id="dev-btn-tab-controle" class="tab-transition flex items-center space-x-2 px-5 py-2 rounded-lg text-xs font-medium text-gray-500 dark:text-zinc-400 hover:text-black dark:hover:text-white">
+                <i data-lucide="activity" class="w-4 h-4"></i><span>ATIVIDADES</span>
+              </button>
+              <button onclick="devSwitchTab('ajustes')" id="dev-btn-tab-ajustes" class="tab-transition flex items-center space-x-2 px-5 py-2 rounded-lg text-xs font-medium text-gray-500 dark:text-zinc-400 hover:text-black dark:hover:text-white">
+                <i data-lucide="user-cog" class="w-4 h-4"></i><span>PERFIL</span>
+              </button>
+            </nav>
+            <div class="flex items-center space-x-3">
+              <button onclick="devToggleTheme()" class="p-2 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 rounded-xl text-gray-600 dark:text-zinc-300 transition-colors">
+                <i data-lucide="moon" class="w-4.5 h-4.5 hidden dark:block"></i>
+                <i data-lucide="sun" class="w-4.5 h-4.5 block dark:hidden"></i>
+              </button>
+              <button onclick="devShowBlockOverlay()" class="bg-iosGreen text-white text-xs font-semibold px-4.5 py-2.5 rounded-xl shadow-md shadow-green-500/10 hover:bg-green-600 active:scale-95 transition-all flex items-center gap-1.5">
+                <i data-lucide="user-plus" class="w-4 h-4"></i><span>Registo</span>
+              </button>
+            </div>
+          </header>
+        </div>
+
+        <!-- DEV TOAST -->
+        <div id="dev-toast" class="fixed top-24 right-6 z-[150] flex items-center bg-white dark:bg-zinc-900 text-black dark:text-white text-sm py-3.5 px-5 rounded-2xl shadow-2xl border border-gray-200/50 dark:border-zinc-800/80 opacity-0 pointer-events-none transition-all duration-300 translate-y-2">
+          <div id="dev-toast-icon-bg" class="p-1.5 bg-green-100 dark:bg-green-950 text-iosGreen rounded-lg mr-3">
+            <i id="dev-toast-icon" data-lucide="check" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <p class="font-bold text-xs">Dev Console</p>
+            <p id="dev-toast-message" class="text-xs text-gray-500 dark:text-zinc-400 mt-0.5"></p>
+          </div>
+        </div>
+
+        <!-- CONTEÚDO -->
+        <main class="flex-1 max-w-7xl w-full mx-auto px-4 pb-8 flex flex-col">
+          <!-- HUB -->
+          <section id="dev-pane-hub" class="dev-tab-pane space-y-6">
+            <div class="relative bg-gradient-to-r from-zinc-100 via-indigo-100 to-white dark:from-zinc-900 dark:via-indigo-950 dark:to-black rounded-3xl p-8 text-black dark:text-white overflow-hidden shadow-lg border border-zinc-200 dark:border-zinc-800">
+              <div class="absolute -right-10 -bottom-10 opacity-10"><i data-lucide="activity" class="w-72 h-72"></i></div>
+              <div class="max-w-xl relative z-10">
+                <span class="bg-iosBlue/20 text-iosBlue border border-iosBlue/30 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">Status do Membro</span>
+                <h2 id="dev-welcome" class="text-2xl sm:text-3xl font-extrabold tracking-tight mt-3">Carregando perfil...</h2>
+                <p class="text-zinc-300 text-sm mt-2 leading-relaxed">Bem-vindo à sua consola pessoal. Acompanhe o progresso das suas entregas de farm, advertências da guilda e candidate-se às vagas de ações disponíveis.</p>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div class="bg-white dark:bg-[#121214] p-5 rounded-2xl border border-gray-200/50 dark:border-zinc-800/50 shadow-sm flex items-center justify-between">
+                <div><span class="text-xs text-gray-400 dark:text-zinc-500 font-medium">As Minhas Entregas (Farm)</span><h3 id="dev-stat-deliveries" class="text-2xl font-black tracking-tight mt-1">0 Unidades</h3><span class="text-[10px] text-iosGreen font-bold flex items-center mt-1"><i data-lucide="arrow-up-right" class="w-3.5 h-3.5 mr-1"></i> Pronto para entregar mais</span></div>
+                <div class="p-3 bg-green-100 dark:bg-green-950/45 text-iosGreen rounded-2xl"><i data-lucide="wheat" class="w-6 h-6"></i></div>
+              </div>
+              <div class="bg-white dark:bg-[#121214] p-5 rounded-2xl border border-gray-200/50 dark:border-zinc-800/50 shadow-sm flex items-center justify-between">
+                <div><span class="text-xs text-gray-400 dark:text-zinc-500 font-medium">Nível Hierárquico</span><h3 id="dev-stat-rank" class="text-2xl font-black tracking-tight mt-1">@Aguardando</h3><span class="text-[10px] text-iosBlue font-bold flex items-center mt-1"><i data-lucide="crown" class="w-3.5 h-3.5 mr-1"></i> Guilda Oficial</span></div>
+                <div class="p-3 bg-blue-100 dark:bg-blue-950/45 text-iosBlue rounded-2xl"><i data-lucide="shield-check" class="w-6 h-6"></i></div>
+              </div>
+              <div class="bg-white dark:bg-[#121214] p-5 rounded-2xl border border-gray-200/50 dark:border-zinc-800/50 shadow-sm flex items-center justify-between">
+                <div><span class="text-xs text-gray-400 dark:text-zinc-500 font-medium">Candidaturas de Ações</span><h3 id="dev-stat-actions" class="text-2xl font-black tracking-tight mt-1">0 Ativas</h3><span class="text-[10px] text-zinc-400 font-bold flex items-center mt-1"><i data-lucide="crosshair" class="w-3.5 h-3.5 mr-1"></i> Veja os templates de ações</span></div>
+                <div class="p-3 bg-red-100 dark:bg-red-950/45 text-iosRed rounded-2xl"><i data-lucide="target" class="w-6 h-6"></i></div>
+              </div>
+              <div class="bg-white dark:bg-[#121214] p-5 rounded-2xl border border-gray-200/50 dark:border-zinc-800/50 shadow-sm flex items-center justify-between">
+                <div><span class="text-xs text-gray-400 dark:text-zinc-500 font-medium">O Meu Historial</span><h3 class="text-2xl font-black tracking-tight mt-1">Sem Avisos</h3><span class="text-[10px] text-iosGreen font-bold flex items-center mt-1"><i data-lucide="check-circle-2" class="w-3.5 h-3.5 mr-1"></i> Ficha de conduta limpa</span></div>
+                <div class="p-3 bg-orange-100 dark:bg-orange-950/45 text-iosOrange rounded-2xl"><i data-lucide="shield-alert" class="w-6 h-6"></i></div>
+              </div>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div class="lg:col-span-2 bg-zinc-100 dark:bg-black text-zinc-800 dark:text-zinc-300 rounded-2xl p-6 border border-zinc-300 dark:border-zinc-800 shadow-lg flex flex-col h-[350px]">
+                <div class="flex items-center justify-between pb-3 border-b border-zinc-300 dark:border-zinc-800 mb-4">
+                  <div class="flex items-center space-x-2">
+                    <span class="w-3 h-3 bg-red-500 rounded-full inline-block"></span>
+                    <span class="w-3 h-3 bg-yellow-500 rounded-full inline-block"></span>
+                    <span class="w-3 h-3 bg-green-500 rounded-full inline-block"></span>
+                    <span class="text-xs font-mono text-zinc-500 pl-2">feed-atividades.log</span>
+                  </div>
+                  <span class="text-[10px] bg-zinc-200 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-800 px-2 py-1 rounded text-zinc-500 dark:text-zinc-400 font-mono">LIVE FEED</span>
+                </div>
+                <div id="dev-terminal" class="flex-1 font-mono text-xs overflow-y-auto space-y-2 pr-1 select-text"></div>
+              </div>
+              <div class="bg-white dark:bg-[#121214] p-6 rounded-2xl border border-gray-200/50 dark:border-zinc-800/50 shadow-sm flex flex-col h-[350px]">
+                <h4 class="text-sm font-bold border-b border-gray-100 dark:border-zinc-800 pb-3">Status do Servidor</h4>
+                <div class="flex-1 overflow-y-auto pt-4 space-y-4">
+                  <div class="flex items-center justify-between"><div class="flex items-center space-x-3"><span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-iosGreen opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-iosGreen"></span></span><span class="text-xs font-medium">Serviços do Discord</span></div><span class="text-xs font-mono text-gray-400">Excelente</span></div>
+                  <div class="flex items-center justify-between"><div class="flex items-center space-x-3"><span class="relative flex h-2 w-2"><span class="relative inline-flex rounded-full h-2 w-2 bg-iosGreen"></span></span><span class="text-xs font-medium">Gateway de Membros</span></div><span class="text-xs font-mono text-gray-400">Ativo</span></div>
+                  <div class="flex items-center justify-between"><div class="flex items-center space-x-3"><span class="relative flex h-2 w-2"><span class="relative inline-flex rounded-full h-2 w-2 bg-iosOrange animate-pulse"></span></span><span class="text-xs font-medium">Fila de Farm Pendente</span></div><span class="text-xs font-mono text-gray-400">A processar</span></div>
+                </div>
+                <div class="border-t border-gray-100 dark:border-zinc-800/80 pt-4 mt-auto">
+                  <button onclick="devSwitchTab('controle')" class="w-full py-2 bg-iosBlue/10 hover:bg-iosBlue/20 text-iosBlue rounded-xl text-xs font-bold transition-colors">Ver Painel de Atividades</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ATIVIDADES -->
+          <section id="dev-pane-controle" class="dev-tab-pane hidden flex-1 flex flex-col lg:flex-row gap-8">
+            <aside class="w-full lg:w-64 flex flex-row lg:flex-col overflow-x-auto lg:overflow-x-visible space-x-2 lg:space-x-0 lg:space-y-1.5 pb-3 lg:pb-0 shrink-0 border-b lg:border-b-0 lg:border-r border-gray-200/50 dark:border-zinc-800/50 lg:pr-6">
+              <button onclick="devControleSubTab('registo')" id="dev-sub-btn-registo" class="flex items-center space-x-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-iosBlue bg-blue-100/60 dark:bg-blue-900/25 shrink-0 w-max lg:w-full">
+                <i data-lucide="clipboard-signature" class="w-4 h-4"></i><span>O Meu Registo</span>
+              </button>
+              <button onclick="devControleSubTab('hierarquia')" id="dev-sub-btn-hierarquia" class="flex items-center space-x-2.5 px-3.5 py-2.5 rounded-xl text-xs font-medium text-gray-500 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-900/50 shrink-0 w-max lg:w-full">
+                <i data-lucide="crown" class="w-4 h-4"></i><span>Organização</span>
+              </button>
+              <button onclick="devControleSubTab('acoes')" id="dev-sub-btn-acoes" class="flex items-center space-x-2.5 px-3.5 py-2.5 rounded-xl text-xs font-medium text-gray-500 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-900/50 shrink-0 w-max lg:w-full">
+                <i data-lucide="target" class="w-4 h-4"></i><span>Candidatar Ações</span>
+              </button>
+              <button onclick="devControleSubTab('farm')" id="dev-sub-btn-farm" class="flex items-center space-x-2.5 px-3.5 py-2.5 rounded-xl text-xs font-medium text-gray-500 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-900/50 shrink-0 w-max lg:w-full">
+                <i data-lucide="wheat" class="w-4 h-4"></i><span>Enviar Farm</span>
+              </button>
+              <button onclick="devControleSubTab('ausencia')" id="dev-sub-btn-ausencia" class="flex items-center space-x-2.5 px-3.5 py-2.5 rounded-xl text-xs font-medium text-gray-500 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-900/50 shrink-0 w-max lg:w-full">
+                <i data-lucide="calendar" class="w-4 h-4"></i><span>Ausência</span>
+              </button>
+              <button onclick="devControleSubTab('reporte')" id="dev-sub-btn-reporte" class="flex items-center space-x-2.5 px-3.5 py-2.5 rounded-xl text-xs font-medium text-gray-500 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-900/50 shrink-0 w-max lg:w-full">
+                <i data-lucide="bug" class="w-4 h-4"></i><span>Pedir Suporte</span>
+              </button>
+              <button onclick="devControleSubTab('vendas')" id="dev-sub-btn-vendas" class="flex items-center space-x-2.5 px-3.5 py-2.5 rounded-xl text-xs font-medium text-gray-500 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-900/50 shrink-0 w-max lg:w-full">
+                <i data-lucide="badge-dollar-sign" class="w-4 h-4"></i><span>Catálogo Loja</span>
+              </button>
+            </aside>
+            <div class="flex-1 bg-white dark:bg-[#121214] border border-gray-200/50 dark:border-zinc-800/50 p-6 sm:p-8 rounded-3xl shadow-sm">
+              <div id="dev-sub-panel-registo" class="dev-sub-panel space-y-6">
+                <div class="border-b border-gray-100 dark:border-zinc-800/80 pb-4">
+                  <h3 class="text-base font-bold">Ficha de Membro Registada</h3>
+                  <p class="text-xs text-gray-400 dark:text-zinc-500 mt-1">Estas são as informações da sua identificação no servidor da guilda.</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div class="bg-gray-50 dark:bg-zinc-900/60 p-4 rounded-xl border border-gray-200/40 dark:border-zinc-800/40">
+                    <span class="text-[10px] uppercase font-bold text-gray-400 dark:text-zinc-500">Nome Oficial</span>
+                    <p id="dev-member-profile-name" class="text-sm font-semibold mt-1">Não Registado</p>
+                  </div>
+                  <div class="bg-gray-50 dark:bg-zinc-900/60 p-4 rounded-xl border border-gray-200/40 dark:border-zinc-800/40">
+                    <span class="text-[10px] uppercase font-bold text-gray-400 dark:text-zinc-500">Passaporte ID</span>
+                    <p id="dev-member-profile-id" class="text-sm font-semibold mt-1">N/D</p>
+                  </div>
+                  <div class="bg-gray-50 dark:bg-zinc-900/60 p-4 rounded-xl border border-gray-200/40 dark:border-zinc-800/40">
+                    <span class="text-[10px] uppercase font-bold text-gray-400 dark:text-zinc-500">Contacto Telefónico</span>
+                    <p id="dev-member-profile-phone" class="text-sm font-semibold mt-1">N/D</p>
+                  </div>
+                  <div class="bg-gray-50 dark:bg-zinc-900/60 p-4 rounded-xl border border-gray-200/40 dark:border-zinc-800/40">
+                    <span class="text-[10px] uppercase font-bold text-gray-400 dark:text-zinc-500">Quem o Recrutou</span>
+                    <p id="dev-member-profile-recruiter" class="text-sm font-semibold mt-1 text-iosBlue">N/D</p>
+                  </div>
+                  <div class="bg-gray-50 dark:bg-zinc-900/60 p-4 rounded-xl border border-gray-200/40 dark:border-zinc-800/40">
+                    <span class="text-[10px] uppercase font-bold text-gray-400 dark:text-zinc-500">Indicado Por</span>
+                    <p id="dev-member-profile-indicated" class="text-sm font-semibold mt-1">N/D</p>
+                  </div>
+                </div>
+              </div>
+              <div id="dev-sub-panel-hierarquia" class="dev-sub-panel hidden space-y-6">
+                <div class="border-b border-gray-100 dark:border-zinc-800/80 pb-4">
+                  <h3 class="text-base font-bold">Estrutura Organizacional</h3>
+                  <p class="text-xs text-gray-400 dark:text-zinc-500 mt-1">Conheça a hierarquia e os cargos oficiais disponíveis na guilda.</p>
+                </div>
+                <div id="dev-hierarquia-container" class="space-y-3 max-h-[350px] overflow-y-auto pr-2"></div>
+              </div>
+              <div id="dev-sub-panel-acoes" class="dev-sub-panel hidden space-y-6">
+                <div class="border-b border-gray-100 dark:border-zinc-800/80 pb-4">
+                  <h3 class="text-base font-bold">Candidatar-se a Ações Organizacionais</h3>
+                  <p class="text-xs text-gray-400 dark:text-zinc-500 mt-1">Candidate-se às missões ativas abaixo. Verifique o limite de vagas e armamento obrigatório.</p>
+                </div>
+                <div id="dev-acoes-container" class="space-y-4 max-h-[350px] overflow-y-auto pr-2"></div>
+                <div id="dev-acoes-signups" class="hidden border-t border-gray-100 dark:border-zinc-800/80 pt-4">
+                  <h4 class="text-sm font-bold mb-3 flex items-center gap-2"><i data-lucide="users" class="w-4 h-4"></i>Inscritos na Ação</h4>
+                  <div id="dev-acoes-signups-list" class="flex flex-wrap gap-2"></div>
+                </div>
+              </div>
+              <div id="dev-sub-panel-farm" class="dev-sub-panel hidden space-y-6">
+                <div class="border-b border-gray-100 dark:border-zinc-800/80 pb-4">
+                  <h3 class="text-base font-bold">Enviar Relatório de Entrega de Farm</h3>
+                  <p class="text-xs text-gray-400 dark:text-zinc-500 mt-1">Utilize este formulário para enviar os insumos farmados. O progresso será registado na sua conta.</p>
+                </div>
+                <form onsubmit="devSubmitFarm(event)" class="space-y-4">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-2">Produto Farmado</label>
+                      <select id="dev-farm-item" class="w-full bg-[#F2F2F7] dark:bg-zinc-900/60 border border-gray-200/50 dark:border-zinc-800/50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-iosBlue">
+                        <option value="Insumos Básicos">Insumos Básicos</option>
+                        <option value="Metais Preciosos">Metais Preciosos</option>
+                        <option value="Medicamentos">Medicamentos</option>
+                        <option value="Munição">Munição</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-2">Quantidade Entregue</label>
+                      <input type="number" id="dev-farm-amount" required min="1" placeholder="Ex: 500" class="w-full bg-[#F2F2F7] dark:bg-zinc-900/60 border border-gray-200/50 dark:border-zinc-800/50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-iosBlue">
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-2">Link da Prova (Imagem/Video do Baú)</label>
+                    <input type="url" id="dev-farm-proof" required placeholder="https://imgur.com/exemplo" class="w-full bg-[#F2F2F7] dark:bg-zinc-900/60 border border-gray-200/50 dark:border-zinc-800/50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-iosBlue">
+                  </div>
+                  <div class="flex justify-end">
+                    <button type="submit" class="bg-iosBlue hover:bg-blue-600 text-white text-xs font-bold px-5 py-3 rounded-xl shadow-md transition-all flex items-center gap-1.5">
+                      <i data-lucide="upload-cloud" class="w-4 h-4"></i><span>Submeter Entrega</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+              <div id="dev-sub-panel-ausencia" class="dev-sub-panel hidden space-y-6">
+                <div class="border-b border-gray-100 dark:border-zinc-800/80 pb-4">
+                  <h3 class="text-base font-bold">Justificar Faltas / Solicitar Ausência</h3>
+                  <p class="text-xs text-gray-400 dark:text-zinc-500 mt-1">Fique resguardado de advertências por inatividade justificando o seu período de ausência.</p>
+                </div>
+                <form onsubmit="devSubmitAusencia(event)" class="space-y-4">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-2">Início da Ausência</label>
+                      <input type="date" id="dev-absence-start" required class="w-full bg-[#F2F2F7] dark:bg-zinc-900/60 border border-gray-200/50 dark:border-zinc-800/50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-iosBlue">
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-2">Fim Previsto</label>
+                      <input type="date" id="dev-absence-end" required class="w-full bg-[#F2F2F7] dark:bg-zinc-900/60 border border-gray-200/50 dark:border-zinc-800/50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-iosBlue">
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-2">Motivo Detalhado</label>
+                    <textarea id="dev-absence-reason" rows="3" required placeholder="Justifique o motivo do seu afastamento temporário..." class="w-full bg-[#F2F2F7] dark:bg-zinc-900/60 border border-gray-200/50 dark:border-zinc-800/50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-iosBlue resize-none"></textarea>
+                  </div>
+                  <div class="flex justify-end">
+                    <button type="submit" class="bg-iosBlue hover:bg-blue-600 text-white text-xs font-bold px-5 py-3 rounded-xl shadow-md transition-all flex items-center gap-1.5">
+                      <i data-lucide="send" class="w-4 h-4"></i><span>Enviar Solicitação</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+              <div id="dev-sub-panel-reporte" class="dev-sub-panel hidden space-y-6">
+                <div class="border-b border-gray-100 dark:border-zinc-800/80 pb-4">
+                  <h3 class="text-base font-bold">Canal de Atendimento e Suporte (Tickets)</h3>
+                  <p class="text-xs text-gray-400 dark:text-zinc-500 mt-1">Abra um ticket para reportar um bug ou pedir auxílio à gerência.</p>
+                </div>
+                <form onsubmit="devSubmitTicket(event)" class="space-y-4">
+                  <div>
+                    <label class="block text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-2">Assunto / Tipo de Suporte</label>
+                    <select id="dev-ticket-type" class="w-full bg-[#F2F2F7] dark:bg-zinc-900/60 border border-gray-200/50 dark:border-zinc-800/50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-iosBlue">
+                      <option value="Dúvida Geral">Dúvida Geral</option>
+                      <option value="Denúncia de Jogador">Denúncia de Jogador</option>
+                      <option value="Problema Financeiro">Problema com Loja/Vendas</option>
+                      <option value="Reporte de Bug">Reporte de Bug do Bot</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-2">Descrição do Problema</label>
+                    <textarea id="dev-ticket-desc" rows="3" required placeholder="Descreva pormenorizadamente a sua situação..." class="w-full bg-[#F2F2F7] dark:bg-zinc-900/60 border border-gray-200/50 dark:border-zinc-800/50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-iosBlue resize-none"></textarea>
+                  </div>
+                  <div class="flex justify-end">
+                    <button type="submit" class="bg-iosBlue hover:bg-blue-600 text-white text-xs font-bold px-5 py-3 rounded-xl shadow-md transition-all flex items-center gap-1.5">
+                      <i data-lucide="life-buoy" class="w-4 h-4"></i><span>Criar Ticket Suporte</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+              <div id="dev-sub-panel-vendas" class="dev-sub-panel hidden space-y-6">
+                <div class="border-b border-gray-100 dark:border-zinc-800/80 pb-4">
+                  <h3 class="text-base font-bold">Catálogo Oficial da Loja</h3>
+                  <p class="text-xs text-gray-400 dark:text-zinc-500 mt-1">Conheça os produtos à venda e as vantagens exclusivas para parceiros autorizados.</p>
+                </div>
+                <div id="dev-vendas-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[300px] overflow-y-auto pr-1"></div>
+              </div>
+            </div>
+          </section>
+
+          <!-- PERFIL -->
+          <section id="dev-pane-ajustes" class="dev-tab-pane hidden space-y-6">
+            <div class="bg-white dark:bg-[#121214] border border-gray-200/50 dark:border-zinc-800/50 rounded-3xl p-6 sm:p-8 shadow-sm">
+              <div class="border-b border-gray-100 dark:border-zinc-800/80 pb-5 mb-6">
+                <h3 class="text-base font-bold">Configurações Pessoais & Discord</h3>
+                <p class="text-xs text-gray-400 dark:text-zinc-500 mt-1">Ajuste as preferências visuais e faça a gestão do seu login.</p>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-2">Tema Visual do Hub</label>
+                    <button onclick="devToggleTheme()" class="w-full py-3 bg-[#F2F2F7] dark:bg-zinc-900/60 border border-gray-200/50 dark:border-zinc-800/50 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2">
+                      <i data-lucide="sun-moon" class="w-4 h-4 text-iosBlue"></i><span>Alternar Modo Escuro / Claro</span>
+                    </button>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-2">ID Discord Vinculado</label>
+                    <input type="text" readonly value="8942385901238591" class="w-full bg-[#F2F2F7] dark:bg-zinc-900/60 border border-gray-200/50 dark:border-zinc-800/50 rounded-xl px-4 py-3 text-sm text-gray-400 select-all cursor-not-allowed">
+                  </div>
+                </div>
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-2">Status de Integração do Bot</label>
+                    <div class="bg-emerald-50 dark:bg-emerald-950/20 text-iosGreen p-4 rounded-xl border border-emerald-500/10 flex items-center gap-2.5">
+                      <i data-lucide="check-circle" class="w-5 h-5"></i>
+                      <span class="text-xs font-semibold">Conta sincronizada com o Discord.</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="border-t border-gray-100 dark:border-zinc-800/80 mt-8 pt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div class="flex items-center space-x-3 text-iosBlue">
+                  <i data-lucide="badge-info" class="w-5 h-5"></i>
+                  <span class="text-xs font-semibold">Hub do Membro v1.2 - Sincronização automática via Webhooks ativa.</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                  <button onclick="devLockSession()" class="bg-red-100 dark:bg-red-950/40 text-iosRed px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-iosRed/20 transition-all flex items-center gap-1.5">
+                    <i data-lucide="lock" class="w-4 h-4"></i>Bloquear Sessão
+                  </button>
+                  <button onclick="document.getElementById('navDevMode').click()" class="bg-zinc-100 dark:bg-zinc-800/50 text-gray-500 dark:text-zinc-400 px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50 transition-all flex items-center gap-1.5">
+                    <i data-lucide="log-out" class="w-4 h-4"></i>Sair
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+
+      <!-- REGISTRATION BLOCKING OVERLAY (força registo antes de usar abas) -->
+      <div id="dev-block-overlay" class="hidden fixed inset-0 z-[180] bg-black/70 mac-blur-deep flex items-center justify-center">
+        <div class="bg-white dark:bg-[#121214] border border-gray-200/50 dark:border-zinc-800/80 rounded-3xl p-8 w-full max-w-lg shadow-2xl mx-4">
+          <div class="flex flex-col items-center text-center mb-6">
+            <div class="p-3 bg-iosOrange/10 text-iosOrange rounded-2xl mb-4"><i data-lucide="shield-off" class="w-8 h-8"></i></div>
+            <h3 class="text-lg font-bold mt-2">Registo Obrigatório</h3>
+            <p class="text-xs text-gray-400 dark:text-zinc-500 mt-1">Complete o seu registo para desbloquear o painel de controlo.</p>
+          </div>
+          <form onsubmit="devSubmitRegisto(event)" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-2">Nome / Personagem <span class="text-iosRed">*</span></label>
+                <input type="text" id="dev-modal-name" required placeholder="Ex: Kawan" oninput="this.value = this.value.replace(/[^a-zA-ZÀ-ÿ ]/g, '')" class="w-full bg-[#F2F2F7] dark:bg-zinc-900/60 border border-gray-200/50 dark:border-zinc-800/50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-iosOrange">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-2">ID / Passaporte <span class="text-iosRed">*</span></label>
+                <input type="text" id="dev-modal-passport" required placeholder="Ex: 123456" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="w-full bg-[#F2F2F7] dark:bg-zinc-900/60 border border-gray-200/50 dark:border-zinc-800/50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-iosOrange">
+              </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-2">Contacto Telefónico <span class="text-iosRed">*</span></label>
+                <input type="text" id="dev-modal-phone" required placeholder="+351 900-000-000" oninput="devFormatPhone(this)" maxlength="13" class="w-full bg-[#F2F2F7] dark:bg-zinc-900/60 border border-gray-200/50 dark:border-zinc-800/50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-iosOrange">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-2">Quem o Recrutou? <span class="text-iosRed">*</span></label>
+                <select id="dev-modal-recruiter" required class="w-full bg-[#F2F2F7] dark:bg-zinc-900/60 border border-gray-200/50 dark:border-zinc-800/50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-iosOrange">
+                  <option value="">A carregar membros...</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-2">Utilizador que o Indicou <span class="text-zinc-400">(opcional)</span></label>
+              <input type="text" id="dev-modal-indicated" list="dev-discord-members" placeholder="Ex: @ReferralUser" class="w-full bg-[#F2F2F7] dark:bg-zinc-900/60 border border-gray-200/50 dark:border-zinc-800/50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-iosOrange">
+              <datalist id="dev-discord-members"></datalist>
+            </div>
+            <div class="pt-4 flex justify-end border-t border-gray-100 dark:border-zinc-800/80">
+              <button type="submit" class="bg-iosOrange hover:bg-orange-600 text-white text-xs font-bold px-6 py-3.5 rounded-xl shadow-md active:scale-95 transition-all flex items-center gap-1.5">
+                <i data-lucide="check-circle" class="w-4 h-4"></i>
+                <span>Concluir Registo</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
 
     <script src="script.js"></script>
   </body>

@@ -226,52 +226,47 @@ button {
   height: 17px;
 }
 
-.dev-mode-fab {
-  position: fixed;
-  left: 16px;
-  bottom: 24px;
-  z-index: 100;
+.nav-dev-mode {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  height: 42px;
-  padding: 0 18px;
-  border: 1.5px solid var(--line);
+  gap: 5px;
+  min-width: 88px;
   border-radius: 999px;
+  padding: 8px 14px;
   color: var(--muted);
-  background: var(--panel);
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.04);
+  background: transparent;
+  text-align: center;
   font-size: 0.82rem;
-  font-weight: 650;
-  white-space: nowrap;
-  transition: color 160ms ease, transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+  font-weight: 500;
   cursor: pointer;
+  transform: perspective(600px) translateZ(0);
+  transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
 }
 
-.dev-mode-fab:hover {
+.nav-dev-mode:hover {
   color: var(--text);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  background: var(--panel);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+  transform: perspective(600px) translateZ(6px);
 }
 
-.dev-mode-fab svg {
-  width: 18px;
-  height: 18px;
+.nav-dev-mode:active {
+  transform: perspective(600px) translateZ(2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.nav-dev-mode svg {
+  width: 15px;
+  height: 15px;
   flex-shrink: 0;
 }
 
-body.developer-mode .dev-mode-fab {
+body.developer-mode .nav-dev-mode {
   color: var(--accent);
-  border-color: var(--accent);
-  box-shadow: 0 3px 12px rgba(0, 113, 227, 0.15);
 }
 
-body.developer-mode .dev-mode-fab:hover {
-  box-shadow: 0 8px 24px rgba(0, 113, 227, 0.22);
-}
-
-body.auth-locked .dev-mode-fab {
-  display: none;
+body.developer-mode .nav-dev-mode:hover {
+  color: var(--accent-hover);
 }
 
 .account-copy {
@@ -336,13 +331,18 @@ body.auth-locked .dev-mode-fab {
   color: var(--muted);
   background: var(--panel);
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.04);
-  transition: color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+  transition: color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
 }
 
 .nav-notification:hover {
   color: var(--text);
-  transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  transform: perspective(600px) translateZ(6px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.nav-notification:active {
+  transform: perspective(600px) translateZ(2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
 .nav-notification svg {
@@ -363,14 +363,21 @@ body.auth-locked .dev-mode-fab {
   text-align: center;
   font-size: 0.92rem;
   font-weight: 500;
-  transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+  transform: perspective(600px) translateZ(0);
+  transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
 }
 
 .nav a:hover,
 .nav a.active {
   color: var(--text);
   background: var(--panel);
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+  transform: perspective(600px) translateZ(6px);
+}
+
+.nav a:active {
+  transform: perspective(600px) translateZ(2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 main {
@@ -4071,18 +4078,13 @@ body.dark-mode .game-symbol.green {
   background: #13351f;
 }
 
-body.dark-mode .dev-mode-fab {
-  background: var(--panel);
-  border-color: var(--line);
-}
-
-body.dark-mode .dev-mode-fab:hover {
+body.dark-mode .nav-dev-mode:hover {
   color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
 }
 
-body.dark-mode.developer-mode .dev-mode-fab {
+body.dark-mode.developer-mode .nav-dev-mode {
   color: var(--accent);
-  border-color: var(--accent);
 }
 
 body.dark-mode .toast {
@@ -4440,4 +4442,103 @@ body.dark-mode .carousel-prize.jackpot {
   .spin-console {
     grid-template-columns: 1fr;
   }
+}
+
+/* ==========================================
+   DEV MODE UI - macOS Style Overlay
+   ========================================== */
+#developer-ui {
+  display: none;
+}
+
+body.developer-mode #developer-ui {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  overflow-y: auto;
+}
+
+body.developer-mode > .topbar,
+body.developer-mode > main {
+  display: none;
+}
+
+/* macOS Glass Effects */
+.mac-blur {
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+.mac-blur-deep {
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+}
+
+/* Tab transitions */
+.tab-transition {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Shake animation */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+.shake-animation {
+  animation: shake 0.2s ease-in-out 0s 2;
+}
+
+/* Dev Modal Overlay fix */
+#dev-modal-overlay {
+  z-index: 10001 !important;
+  position: fixed;
+}
+
+#dev-toast {
+  z-index: 10002 !important;
+  position: fixed;
+}
+
+/* Dev custom scrollbar */
+#developer-ui ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+#developer-ui ::-webkit-scrollbar-track {
+  background: transparent;
+}
+#developer-ui ::-webkit-scrollbar-thumb {
+  background: rgba(142, 142, 147, 0.3);
+  border-radius: 999px;
+}
+#developer-ui ::-webkit-scrollbar-thumb:hover {
+  background: rgba(142, 142, 147, 0.5);
+}
+
+/* Dark mode base for dev ui */
+.dark #developer-ui,
+#developer-ui .dark {
+  color-scheme: dark;
+}
+
+/* Animations for terminal feed */
+@keyframes dev-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+#developer-ui .animate-fade-in {
+  animation: dev-fade-in 0.3s ease-out both;
+}
+
+/* Dev login screen body fix when locked */
+body.developer-mode {
+  overflow: hidden;
+}
+
+body.developer-mode #developer-ui {
+  overflow-y: auto;
 }

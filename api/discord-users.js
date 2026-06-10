@@ -1,3 +1,5 @@
+import { getLocalDiscordBotToken } from "./_mongo.js";
+
 const DISCORD_API = "https://discord.com/api/v10";
 
 function normalizeDiscordMember(member) {
@@ -22,7 +24,7 @@ export default async function handler(request, response) {
       return;
     }
 
-    const botToken = process.env.DISCORD_BOT_TOKEN;
+    const botToken = process.env.DISCORD_BOT_TOKEN || (await getLocalDiscordBotToken());
     const guildId = process.env.DISCORD_GUILD_ID || "1500607972605296713";
 
     if (!botToken) {

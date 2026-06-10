@@ -2838,15 +2838,21 @@ usersDirectoryTabs.forEach((button) => {
 });
 discordTokenForm?.addEventListener("submit", saveDiscordBotToken);
 
-const devModeToggle = document.getElementById("devModeToggle");
-if (devModeToggle) {
-  devModeToggle.addEventListener("click", () => {
-    document.body.classList.toggle("developer-mode");
-    const isDev = document.body.classList.contains("developer-mode");
+const navDevMode = document.getElementById("navDevMode");
+if (navDevMode) {
+  navDevMode.addEventListener("click", () => {
+    const isDev = document.body.classList.toggle("developer-mode");
+    navDevMode.classList.toggle("active", isDev);
     if (isDev) {
       showToast("Modo Developer ativado.");
+      if (sessionStorage.getItem('dev_logged_in') === 'true') {
+        devBypassLogin();
+      }
     } else {
       showToast("Modo Developer desativado.");
+      document.getElementById("dev-login-screen")?.classList.remove("scale-105", "opacity-0", "pointer-events-none");
+      document.getElementById("dev-main-panel")?.classList.add("hidden");
+      document.documentElement.classList.remove("dark");
     }
   });
 }
@@ -2905,3 +2911,442 @@ async function initApp() {
 }
 
 initApp();
+
+/* ==========================================
+   DEV MODE UI — Sistema de Membro
+   ========================================== */
+let devLoggedIn = false;
+let devRegistry = null;
+let devTotalDeliveries = 0;
+let devCandidaturas = []; /* each: { acaoIdx, membroNome } */
+
+const devAcoesData = [
+  { nome: 'Operação Fronteira', vagas: 3, armamento: 'Fuzil de Assalto', armadura: 'Pesada', desc: 'Patrulhar a fronteira norte.', candidatos: [] },
+  { nome: 'Rota Comercial 7', vagas: 5, armamento: 'Armas Ligeiras', armadura: 'Ligeira', desc: 'escolta de comboio de suprimentos.', candidatos: [] },
+  { nome: 'Limpeza Urbana', vagas: 2, armamento: 'Submetralhadora', armadura: 'Média', desc: 'Varrer zona hostil no perímetro urbano.', candidatos: [] },
+];
+
+const devHierarquiaData = [
+  { rank: 'Fundador', role: 'Líder Máximo da Guilda', color: 'text-red-400' },
+  { rank: 'Vice-Líder', role: 'Braço Direito do Fundador', color: 'text-iosOrange' },
+  { rank: 'Administrador', role: 'Gestão Executiva', color: 'text-yellow-500' },
+  { rank: 'Recruta', role: 'Membro em Período de Experiência', color: 'text-zinc-400' },
+];
+
+const devVendasData = [
+  { nome: 'Kit Inicial de Membro', preco: '€7.99', precoParceiro: '€4.99', desc: 'Pacote básico de sobrevivência com rações e munição.' },
+  { nome: 'Upgrade de Patente Exp', preco: '€14.99', precoParceiro: '€9.99', desc: 'Aumenta a tua experiência ganha em 30% por 30 dias.' },
+  { nome: 'VIP Acesso Total', preco: '€24.99', precoParceiro: '€17.99', desc: 'Acesso prioritário a vagas e canais privados do Discord.' },
+  { nome: 'Skin Exclusiva Ghost', preco: '€4.99', precoParceiro: '€2.99', desc: 'Skin de arma ou personagem de edição limitada.' },
+];
+
+/* ---------- live feed / terminal ---------- */
+function devLog(type, msg) {
+  const term = document.getElementById('dev-terminal');
+  if (!term) return;
+  const now = new Date().toLocaleTimeString();
+  const colors = { info: 'text-zinc-400', success: 'text-iosGreen', warn: 'text-iosOrange', error: 'text-iosRed' };
+  term.innerHTML += `<div class="flex items-start animate-fade-in"><span class="text-zinc-600 mr-2">[${now}]</span> <span class="${colors[type] || colors.info}">${msg}</span></div>`;
+  term.scrollTop = term.scrollHeight;
+}
+
+function devLiveFeed() {
+  devLog('info', 'Consola de atividades iniciada. Modo Membro ativo.');
+  setInterval(() => {
+    if (!devLoggedIn) return;
+    const phrases = [
+      "Gateway Discord: heartbeat OK.",
+      "Cache de membros atualizado.",
+      "Nenhuma anomalia detetada.",
+      "Serviços operacionais normais.",
+      "Fila de processamento vazia.",
+    ];
+    devLog('info', phrases[Math.floor(Math.random() * phrases.length)]);
+  }, 15000);
+}
+
+/* ---------- lock screen clock ---------- */
+function devUpdateClock() {
+  const timeEl = document.getElementById('dev-lock-time');
+  const dateEl = document.getElementById('dev-lock-date');
+  if (!timeEl || !dateEl) return;
+  const now = new Date();
+  timeEl.innerText = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const options = { weekday: 'long', day: 'numeric', month: 'long' };
+  dateEl.innerText = now.toLocaleDateString('pt-PT', options);
+}
+
+/* ---------- login / bypass ---------- */
+function devLogin(e) {
+  e.preventDefault();
+  const pass = document.getElementById('dev-login-password');
+  const container = pass?.closest('.relative');
+  const error = document.getElementById('dev-login-error');
+  if (pass.value === 'membro') {
+    error?.classList.add('opacity-0');
+    devGrantAccess();
+  } else {
+    container?.classList.add('shake-animation');
+    error?.classList.remove('opacity-0');
+    pass.value = '';
+    setTimeout(() => container?.classList.remove('shake-animation'), 400);
+  }
+}
+
+function devBypassLogin() {
+  devGrantAccess();
+}
+
+function devGrantAccess() {
+  devLoggedIn = true;
+  sessionStorage.setItem('dev_logged_in', 'true');
+  document.getElementById('dev-login-screen')?.classList.add('scale-105', 'opacity-0', 'pointer-events-none');
+  document.getElementById('dev-main-panel')?.classList.remove('hidden');
+  devSwitchTab('hub');
+  devLog('success', 'Acesso concedido ao painel de membro.');
+  devCheckRegistration();
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+/* ---------- registo obrigatório ---------- */
+function devCheckRegistration() {
+  const overlay = document.getElementById('dev-block-overlay');
+  if (!overlay) return;
+  const saved = localStorage.getItem('dev_registry');
+  if (saved) {
+    devRegistry = JSON.parse(saved);
+    overlay.classList.add('hidden');
+    devUpdateProfileUI();
+    devUpdateHubStats();
+    devLog('info', `Membro ${devRegistry.name} autenticado.`);
+  } else {
+    overlay.classList.remove('hidden');
+    devLog('warn', 'Registo pendente — painel bloqueado.');
+  }
+}
+
+function devHideBlockOverlay() {
+  const overlay = document.getElementById('dev-block-overlay');
+  if (overlay) overlay.classList.add('hidden');
+}
+
+/* ---------- phone formatting ---------- */
+function devFormatPhone(input) {
+  let digits = input.value.replace(/[^0-9]/g, '');
+  let formatted = '';
+  for (let i = 0; i < digits.length; i++) {
+    if (i > 0 && i % 3 === 0) formatted += '-';
+    formatted += digits[i];
+  }
+  input.value = formatted;
+}
+
+/* ---------- populate Discord members in registration form ---------- */
+async function devPopulateDiscordMembers() {
+  const select = document.getElementById('dev-modal-recruiter');
+  const datalist = document.getElementById('dev-discord-members');
+  if (!select && !datalist) return;
+  if (!usersDirectoryData.hubUsers.length && !usersDirectoryData.discordOnly.length) {
+    try { await fetchUsersDirectory(); } catch (_) {}
+  }
+  const members = [];
+  const allUsers = [...(usersDirectoryData?.hubUsers || []), ...(usersDirectoryData?.discordOnly || [])];
+  const seen = new Set();
+  allUsers.forEach(u => {
+    const name = u.username || u.name || '';
+    if (name && !seen.has(name)) { seen.add(name); members.push(name); }
+  });
+  if (members.length === 0) {
+    members.push('@Admin', '@Dono', '@Mod', '@Sub-Dono');
+  }
+  if (select) {
+    select.innerHTML = '<option value="">Selecionar...</option>' + members.map(m => `<option value="${m}">${m}</option>`).join('');
+  }
+  if (datalist) {
+    datalist.innerHTML = members.map(m => `<option value="${m}">`).join('');
+  }
+}
+
+async function devShowBlockOverlay() {
+  const overlay = document.getElementById('dev-block-overlay');
+  if (overlay) overlay.classList.remove('hidden');
+  await devPopulateDiscordMembers();
+}
+
+function devSubmitRegisto(e) {
+  e.preventDefault();
+  const name = document.getElementById('dev-modal-name').value;
+  const passport = document.getElementById('dev-modal-passport').value;
+  const phone = document.getElementById('dev-modal-phone').value;
+  const recruiter = document.getElementById('dev-modal-recruiter').value;
+  const indicated = document.getElementById('dev-modal-indicated').value;
+  devRegistry = {
+    name,
+    id: passport,
+    phone,
+    recruiter,
+    indicated: indicated || 'Ninguém',
+    rank: '@Recruta',
+    registeredAt: new Date().toISOString()
+  };
+  localStorage.setItem('dev_registry', JSON.stringify(devRegistry));
+  devHideBlockOverlay();
+  devShowToast(`Membro ${name} registado com sucesso!`);
+  devLog('success', `Registo: ${name} | ID: ${passport} | Recrutado por: ${recruiter}`);
+  devUpdateProfileUI();
+  devUpdateHubStats();
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function devUpdateProfileUI() {
+  if (!devRegistry) return;
+  const fields = {
+    'dev-member-profile-name': devRegistry.name || 'Não Registado',
+    'dev-member-profile-id': devRegistry.id || 'N/D',
+    'dev-member-profile-phone': devRegistry.phone || 'N/D',
+    'dev-member-profile-recruiter': devRegistry.recruiter || 'N/D',
+    'dev-member-profile-indicated': devRegistry.indicated || 'N/D',
+  };
+  Object.entries(fields).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el) el.innerText = val;
+  });
+}
+
+/* ---------- lock session ---------- */
+function devLockSession() {
+  devLoggedIn = false;
+  devRegistry = null;
+  sessionStorage.removeItem('dev_logged_in');
+  localStorage.removeItem('dev_registry');
+  document.getElementById('dev-main-panel')?.classList.add('hidden');
+  const login = document.getElementById('dev-login-screen');
+  if (login) {
+    login.classList.remove('scale-105', 'opacity-0', 'pointer-events-none');
+    login.querySelector('input') ? login.querySelector('input').value = '' : null;
+  }
+  const err = document.getElementById('dev-login-error');
+  if (err) err.classList.add('opacity-0');
+  document.getElementById('dev-terminal') ? document.getElementById('dev-terminal').innerHTML = '' : null;
+  devSwitchTab('hub');
+  devLog('info', 'Sessão bloqueada. A guardar painel…');
+  devCandidaturas = [];
+  devTotalDeliveries = 0;
+  devRenderAcoes();
+  devShowToast('Sessão bloqueada com segurança.', false);
+}
+
+/* ---------- tab switching ---------- */
+function devSwitchTab(tabId) {
+  document.querySelectorAll('.dev-tab-pane').forEach(el => el.classList.add('hidden'));
+  document.getElementById(`dev-pane-${tabId}`)?.classList.remove('hidden');
+  ['hub', 'controle', 'ajustes'].forEach(btn => {
+    const el = document.getElementById(`dev-btn-tab-${btn}`);
+    if (!el) return;
+    if (btn === tabId) {
+      el.className = "tab-transition flex items-center space-x-2 px-5 py-2 rounded-lg text-xs font-semibold text-iosBlue dark:text-white bg-white dark:bg-zinc-800 shadow-sm";
+    } else {
+      el.className = "tab-transition flex items-center space-x-2 px-5 py-2 rounded-lg text-xs font-medium text-gray-500 dark:text-zinc-400 hover:text-black dark:hover:text-white";
+    }
+  });
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function devControleSubTab(subId) {
+  document.querySelectorAll('.dev-sub-panel').forEach(el => el.classList.add('hidden'));
+  document.getElementById(`dev-sub-panel-${subId}`)?.classList.remove('hidden');
+  ['registo', 'hierarquia', 'acoes', 'farm', 'ausencia', 'reporte', 'vendas'].forEach(key => {
+    const el = document.getElementById(`dev-sub-btn-${key}`);
+    if (!el) return;
+    if (key === subId) {
+      el.className = "flex items-center space-x-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-iosBlue bg-blue-100/60 dark:bg-blue-900/25 shrink-0 w-max lg:w-full";
+    } else {
+      el.className = "flex items-center space-x-2.5 px-3.5 py-2.5 rounded-xl text-xs font-medium text-gray-500 dark:text-zinc-400 hover:bg-gray-100 dark:hover:bg-zinc-900/50 shrink-0 w-max lg:w-full";
+    }
+  });
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+/* ---------- theme ---------- */
+function devToggleTheme() {
+  document.documentElement.classList.toggle('dark');
+}
+
+/* ---------- toast ---------- */
+function devShowToast(msg, isError = false) {
+  const toast = document.getElementById('dev-toast');
+  if (!toast) return;
+  const toastMsg = document.getElementById('dev-toast-message');
+  const iconBg = document.getElementById('dev-toast-icon-bg');
+  const icon = document.getElementById('dev-toast-icon');
+  toastMsg.innerText = msg || 'Operação concluída!';
+  iconBg.className = `p-1.5 ${isError ? 'bg-red-100 dark:bg-red-950 text-iosRed' : 'bg-green-100 dark:bg-green-950 text-iosGreen'} rounded-lg mr-3`;
+  icon.setAttribute('data-lucide', isError ? 'x-circle' : 'check');
+  toast.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-2');
+  toast.classList.add('translate-y-0');
+  setTimeout(() => {
+    toast.classList.add('opacity-0', 'pointer-events-none');
+    toast.classList.remove('translate-y-0');
+  }, 3000);
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+/* ---------- HUB stats ---------- */
+function devUpdateHubStats() {
+  if (!devRegistry) return;
+  const welcome = document.getElementById('dev-welcome');
+  if (welcome) welcome.innerText = `Bem-vindo, ${devRegistry.name} 👋`;
+  const deliveries = document.getElementById('dev-stat-deliveries');
+  if (deliveries) deliveries.innerText = `${devTotalDeliveries} Unidades`;
+  const rank = document.getElementById('dev-stat-rank');
+  if (rank) rank.innerText = devRegistry.rank || '@Recruta';
+  const actions = document.getElementById('dev-stat-actions');
+  if (actions) actions.innerText = `${devCandidaturas.length} Ativas`;
+}
+
+/* ---------- farm (incrementa entregas) ---------- */
+function devSubmitFarm(e) {
+  e.preventDefault();
+  const item = document.getElementById('dev-farm-item').value;
+  const amount = parseInt(document.getElementById('dev-farm-amount').value, 10) || 0;
+  const proof = document.getElementById('dev-farm-proof').value;
+  if (amount < 1) { devShowToast('Quantidade inválida.', true); return; }
+  devTotalDeliveries += amount;
+  devUpdateHubStats();
+  devShowToast(`Farm de ${amount}x ${item} registada!`);
+  devLog('success', `Farm: +${amount} ${item} — Total: ${devTotalDeliveries} un. (${proof})`);
+  e.target.reset();
+}
+
+/* ---------- ausência ---------- */
+function devSubmitAusencia(e) {
+  e.preventDefault();
+  const start = document.getElementById('dev-absence-start').value;
+  const end = document.getElementById('dev-absence-end').value;
+  const reason = document.getElementById('dev-absence-reason').value;
+  devShowToast(`Ausência registada de ${start} a ${end}.`);
+  devLog('info', `Ausência: ${start} → ${end} — "${reason.slice(0, 50)}"`);
+  e.target.reset();
+}
+
+/* ---------- suporte / ticket ---------- */
+function devSubmitTicket(e) {
+  e.preventDefault();
+  const type = document.getElementById('dev-ticket-type').value;
+  const desc = document.getElementById('dev-ticket-desc').value;
+  devShowToast(`Ticket de "${type}" criado com sucesso!`);
+  devLog('warn', `Ticket: ${type} — "${desc.slice(0, 60)}"`);
+  e.target.reset();
+}
+
+/* ---------- hierarquia ---------- */
+function devRenderHierarquia() {
+  const container = document.getElementById('dev-hierarquia-container');
+  if (!container) return;
+  container.innerHTML = devHierarquiaData.map(r => `
+    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-zinc-900/60 rounded-xl border border-gray-200/40 dark:border-zinc-800/40">
+      <div class="flex items-center gap-3">
+        <i data-lucide="crown" class="w-4 h-4 ${r.color}"></i>
+        <div>
+          <p class="text-sm font-semibold ${r.color}">${r.rank}</p>
+          <p class="text-[10px] text-gray-400 dark:text-zinc-500">${r.role}</p>
+        </div>
+      </div>
+      <span class="text-[10px] text-gray-400 uppercase">${r.rank === 'Recruta' ? 'Em Vigor' : 'Cargo'}</span>
+    </div>
+  `).join('');
+}
+
+/* ---------- acoes (candidatura real) ---------- */
+function devRenderAcoes() {
+  const container = document.getElementById('dev-acoes-container');
+  if (!container) return;
+  container.innerHTML = devAcoesData.map((a, idx) => {
+    const inscritos = a.candidatos.length;
+    const cheia = inscritos >= a.vagas;
+    const candidatado = a.candidatos.some(c => c.membroNome === (devRegistry ? devRegistry.name : null));
+    return `
+      <div class="p-4 bg-gray-50 dark:bg-zinc-900/60 rounded-xl border border-gray-200/40 dark:border-zinc-800/40">
+        <div class="flex items-start justify-between mb-2">
+          <div>
+            <p class="text-sm font-bold">${a.nome}</p>
+            <p class="text-xs text-gray-400 dark:text-zinc-500">${a.desc}</p>
+          </div>
+          <span class="text-[10px] font-bold ${cheia ? 'bg-iosRed/10 text-iosRed' : 'bg-iosBlue/10 text-iosBlue'} px-2 py-0.5 rounded-full">${inscritos}/${a.vagas} vagas</span>
+        </div>
+        <div class="flex flex-wrap gap-3 text-[10px] text-gray-400 dark:text-zinc-500 mb-3">
+          <span>🔫 ${a.armamento}</span>
+          <span>🛡️ ${a.armadura}</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <div class="flex flex-wrap gap-1">
+            ${a.candidatos.map(c => `<span class="text-[10px] bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full font-medium">${c.membroNome}</span>`).join('')}
+            ${inscritos === 0 ? '<span class="text-[10px] text-zinc-400">Nenhum inscrito</span>' : ''}
+          </div>
+          <button onclick="devToggleCandidatura(${idx})" class="text-[10px] font-bold px-4 py-2 rounded-lg transition-all ${candidatado ? 'bg-iosRed/10 text-iosRed hover:bg-iosRed/20' : cheia ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 cursor-not-allowed' : 'bg-iosBlue hover:bg-blue-600 text-white'}">${candidatado ? 'Sair' : cheia ? 'Cheia' : 'Candidatar'}</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function devToggleCandidatura(idx) {
+  if (!devRegistry) { devShowToast('Complete o registo primeiro.', true); return; }
+  const acao = devAcoesData[idx];
+  const existing = acao.candidatos.findIndex(c => c.membroNome === devRegistry.name);
+  if (existing > -1) {
+    acao.candidatos.splice(existing, 1);
+    devCandidaturas = devCandidaturas.filter(c => !(c.acaoIdx === idx && c.membroNome === devRegistry.name));
+    devLog('info', `${devRegistry.name} saiu da "${acao.nome}".`);
+    devShowToast(`Saíste da "${acao.nome}".`, false);
+  } else {
+    if (acao.candidatos.length >= acao.vagas) { devShowToast('Ação lotada.', true); return; }
+    acao.candidatos.push({ membroNome: devRegistry.name });
+    devCandidaturas.push({ acaoIdx: idx, membroNome: devRegistry.name });
+    devLog('success', `${devRegistry.name} candidatou-se a "${acao.nome}".`);
+    devShowToast(`Candidatura enviada para "${acao.nome}"!`);
+  }
+  devRenderAcoes();
+  devUpdateHubStats();
+}
+
+/* ---------- vendas / catálogo ---------- */
+function devRenderVendas() {
+  const container = document.getElementById('dev-vendas-container');
+  if (!container) return;
+  container.innerHTML = devVendasData.map(v => `
+    <div class="p-4 bg-gray-50 dark:bg-zinc-900/60 rounded-xl border border-gray-200/40 dark:border-zinc-800/40 flex flex-col items-start">
+      <div class="p-2 bg-iosBlue/10 text-iosBlue rounded-lg mb-3"><i data-lucide="package" class="w-5 h-5"></i></div>
+      <p class="text-sm font-bold">${v.nome}</p>
+      <p class="text-xs text-gray-400 dark:text-zinc-500 mt-1">${v.desc}</p>
+      <div class="flex items-center justify-between w-full mt-4">
+        <div class="flex items-center gap-2">
+          <span class="text-[10px] line-through text-zinc-400">${v.preco}</span>
+          <span class="text-sm font-bold text-emerald-500">${v.precoParceiro}</span>
+        </div>
+        <button onclick="devShowToast('Item: ${v.nome} adicionado ao carrinho!')" class="text-[10px] bg-iosBlue hover:bg-blue-600 text-white font-bold px-3 py-1.5 rounded-lg">Comprar</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ---------- init ---------- */
+async function devInit() {
+  devUpdateClock();
+  setInterval(devUpdateClock, 1000);
+  devLiveFeed();
+  devRenderHierarquia();
+  devRenderAcoes();
+  devRenderVendas();
+  await devPopulateDiscordMembers();
+
+  if (sessionStorage.getItem('dev_logged_in') === 'true') {
+    devBypassLogin();
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', devInit);
+} else {
+  devInit();
+}
