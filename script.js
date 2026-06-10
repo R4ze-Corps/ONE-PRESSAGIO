@@ -1930,6 +1930,23 @@ async function loadEventsFromApi({ selectLatest = false } = {}) {
   }
 }
 
+async function devNotifyNewEvent(eventTitle) {
+  const testUserId = "1311011330400190508";
+  try {
+    const embed = {
+      title: "🎉 Novo Evento Criado!",
+      description: `**${eventTitle}**\n\nConfira os detalhes no painel de eventos do ONE HUB.`,
+      color: 0xf97316,
+      timestamp: new Date().toISOString(),
+    };
+    await fetch(`${API_BASE}/api/discord-notify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: testUserId, embeds: [embed] }),
+    });
+  } catch (_) {}
+}
+
 async function saveEventToApi(eventData = eventConfig, { apply = true } = {}) {
   const response = await fetch(`${API_BASE}/api/events`, {
     method: "POST",
@@ -2000,6 +2017,7 @@ function bindEventConfigForm() {
       await saveEventToApi(newEvent, { apply: false });
       await loadEventsFromApi();
       syncEventConfigForm();
+      devNotifyNewEvent(newEvent.title);
       showToast("Novo evento criado e adicionado na categoria Eventos.");
     } catch (error) {
       console.warn("API events:", error.message);

@@ -8,6 +8,7 @@ import discordUsersHandler from "./api/discord-users.js";
 import discordRolesHandler from "./api/discord-roles.js";
 import discordChannelsHandler from "./api/discord-channels.js";
 import discordConfigHandler from "./api/discord-config.js";
+import discordNotifyHandler from "./api/discord-notify.js";
 import eventParticipantsHandler from "./api/event-participants.js";
 import eventsHandler from "./api/events.js";
 import latestEventHandler from "./api/events/latest.js";
@@ -26,6 +27,7 @@ const apiRoutes = new Map([
   ["/api/discord-roles", discordRolesHandler],
   ["/api/discord-channels", discordChannelsHandler],
   ["/api/discord-config", discordConfigHandler],
+  ["/api/discord-notify", discordNotifyHandler],
   ["/api/event-participants", eventParticipantsHandler],
   ["/api/events", eventsHandler],
   ["/api/events/latest", latestEventHandler],
