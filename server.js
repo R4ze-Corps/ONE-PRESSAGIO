@@ -5,6 +5,9 @@ import { createServer } from "node:http";
 
 import discordTokenHandler from "./api/discord-token.js";
 import discordUsersHandler from "./api/discord-users.js";
+import discordRolesHandler from "./api/discord-roles.js";
+import discordChannelsHandler from "./api/discord-channels.js";
+import discordConfigHandler from "./api/discord-config.js";
 import eventParticipantsHandler from "./api/event-participants.js";
 import eventsHandler from "./api/events.js";
 import latestEventHandler from "./api/events/latest.js";
@@ -20,6 +23,9 @@ const root = process.cwd();
 const apiRoutes = new Map([
   ["/api/discord-token", discordTokenHandler],
   ["/api/discord-users", discordUsersHandler],
+  ["/api/discord-roles", discordRolesHandler],
+  ["/api/discord-channels", discordChannelsHandler],
+  ["/api/discord-config", discordConfigHandler],
   ["/api/event-participants", eventParticipantsHandler],
   ["/api/events", eventsHandler],
   ["/api/events/latest", latestEventHandler],

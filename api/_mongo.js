@@ -21,7 +21,7 @@ function createEmptyData() {
   };
 }
 
-async function readDataFile() {
+export async function readDataFile() {
   if (!existsSync(dataFile)) return createEmptyData();
   const content = await fs.readFile(dataFile, "utf8");
   const data = content.trim() ? JSON.parse(content) : createEmptyData();
@@ -29,7 +29,7 @@ async function readDataFile() {
   return data;
 }
 
-async function writeDataFile(data) {
+export async function writeDataFile(data) {
   await fs.writeFile(dataFile, `${JSON.stringify(data, null, 2)}\n`, "utf8");
 }
 

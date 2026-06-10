@@ -1338,56 +1338,83 @@
           <div class="flex-1 p-6 overflow-y-auto">
             <!-- Registrar -->
             <div id="dev-config-panel-registrar" class="config-panel">
-              <form onsubmit="devSubmitRegisto(event)" class="space-y-4">
-                <div class="flex flex-col items-center text-center mb-4">
-                  <div class="p-3 bg-iosOrange/10 text-iosOrange rounded-2xl mb-3"><i data-lucide="shield-off" class="w-8 h-8"></i></div>
-                  <h3 class="text-lg font-bold">Registo de Membro</h3>
-                  <p class="text-xs text-gray-400 dark:text-zinc-500 mt-1">Complete o seu registo para desbloquear o painel de controlo.</p>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label class="block text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-2">Nome / Personagem <span class="text-iosRed">*</span></label>
-                    <input type="text" id="dev-modal-name" required placeholder="Ex: Kawan" oninput="this.value = this.value.replace(/[^a-zA-ZÀ-ÿ ]/g, '')" class="w-full bg-[#F2F2F7] dark:bg-zinc-900/60 border border-gray-200/50 dark:border-zinc-800/50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-iosOrange">
-                  </div>
-                  <div>
-                    <label class="block text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-2">ID / Passaporte <span class="text-iosRed">*</span></label>
-                    <input type="text" id="dev-modal-passport" required placeholder="Ex: 123456" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="w-full bg-[#F2F2F7] dark:bg-zinc-900/60 border border-gray-200/50 dark:border-zinc-800/50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-iosOrange">
-                  </div>
-                </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label class="block text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-2">Contacto Telefónico <span class="text-iosRed">*</span></label>
-                    <input type="text" id="dev-modal-phone" required placeholder="+351 900-000-000" oninput="devFormatPhone(this)" maxlength="13" class="w-full bg-[#F2F2F7] dark:bg-zinc-900/60 border border-gray-200/50 dark:border-zinc-800/50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-iosOrange">
-                  </div>
-                  <div>
-                    <label class="block text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-2">Quem o Recrutou? <span class="text-iosRed">*</span></label>
-                    <div id="dev-recruiter-wrapper" class="relative">
-                      <select id="dev-modal-recruiter" required class="hidden"></select>
-                      <button type="button" id="dev-recruiter-trigger" class="dev-select-trigger w-full bg-[#F2F2F7] dark:bg-zinc-900/60 border border-gray-200/50 dark:border-zinc-800/50 rounded-xl px-4 py-3 text-sm flex items-center gap-2.5 text-left" onclick="devToggleRecruiterDropdown()">
-                        <span id="dev-recruiter-value" class="flex-1 text-gray-400 dark:text-zinc-500">Selecionar...</span>
-                        <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400 shrink-0"></i>
-                      </button>
-                      <div id="dev-recruiter-dropdown" class="dev-dropdown-panel hidden">
-                        <input id="dev-recruiter-search" type="text" placeholder="Procurar membro..." class="dev-dropdown-search" oninput="devFilterRecruiter(this.value)">
-                        <div id="dev-recruiter-options" class="dev-dropdown-options"></div>
-                      </div>
+              <div class="flex flex-col items-center text-center mb-5">
+                <div class="p-3 bg-iosOrange/10 text-iosOrange rounded-2xl mb-3"><i data-lucide="shield-off" class="w-8 h-8"></i></div>
+                <h3 class="text-lg font-bold">Configurar Registo</h3>
+                <p class="text-xs text-gray-400 dark:text-zinc-500 mt-1">Defina os cargos e canais para o sistema de registo.</p>
+              </div>
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-2">Cargo de Registo <span class="text-iosRed">*</span></label>
+                  <p class="text-[10px] text-gray-400 dark:text-zinc-600 mb-2">Cargo atribuído ao player quando entra no Discord.</p>
+                  <div class="relative" id="dev-cargo-registro-wrapper">
+                    <input type="hidden" id="dev-cargo-registro-id" value="">
+                    <select id="dev-cargo-registro" class="hidden"></select>
+                    <button type="button" class="dev-select-trigger w-full bg-[#F2F2F7] dark:bg-zinc-900/60 border border-gray-200/50 dark:border-zinc-800/50 rounded-xl px-4 py-3 text-sm flex items-center gap-2.5 text-left" onclick="devToggleRoleDropdown('registo')">
+                      <span id="dev-cargo-registro-value" class="flex-1 text-gray-400 dark:text-zinc-500">Selecionar cargo...</span>
+                      <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400 shrink-0"></i>
+                    </button>
+                    <div id="dev-cargo-registro-dropdown" class="dev-dropdown-panel hidden">
+                      <input type="text" class="dev-dropdown-search" placeholder="Procurar cargo..." oninput="devFilterRoleDropdown('registo', this.value)">
+                      <div id="dev-cargo-registro-options" class="dev-dropdown-options"></div>
                     </div>
                   </div>
                 </div>
                 <div>
-                  <label class="block text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-2">Utilizador que o Indicou <span class="text-zinc-400">(opcional)</span></label>
-                  <div id="dev-indicated-wrapper" class="relative">
-                    <input type="text" id="dev-modal-indicated" autocomplete="off" placeholder="Procurar membro do Discord..." class="w-full bg-[#F2F2F7] dark:bg-zinc-900/60 border border-gray-200/50 dark:border-zinc-800/50 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-iosOrange" oninput="devFilterIndicated(this.value)" onfocus="devShowIndicatedSuggestions()" onblur="setTimeout(()=>devHideIndicatedSuggestions(),200)">
-                    <div id="dev-indicated-suggestions" class="dev-dropdown-panel hidden"></div>
+                  <label class="block text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-2">Registo Aprovado <span class="text-iosRed">*</span></label>
+                  <p class="text-[10px] text-gray-400 dark:text-zinc-600 mb-2">Cargo atribuído após o registo ser aprovado.</p>
+                  <div class="relative" id="dev-cargo-aprovado-wrapper">
+                    <input type="hidden" id="dev-cargo-aprovado-id" value="">
+                    <select id="dev-cargo-aprovado" class="hidden"></select>
+                    <button type="button" class="dev-select-trigger w-full bg-[#F2F2F7] dark:bg-zinc-900/60 border border-gray-200/50 dark:border-zinc-800/50 rounded-xl px-4 py-3 text-sm flex items-center gap-2.5 text-left" onclick="devToggleRoleDropdown('aprovado')">
+                      <span id="dev-cargo-aprovado-value" class="flex-1 text-gray-400 dark:text-zinc-500">Selecionar cargo...</span>
+                      <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400 shrink-0"></i>
+                    </button>
+                    <div id="dev-cargo-aprovado-dropdown" class="dev-dropdown-panel hidden">
+                      <input type="text" class="dev-dropdown-search" placeholder="Procurar cargo..." oninput="devFilterRoleDropdown('aprovado', this.value)">
+                      <div id="dev-cargo-aprovado-options" class="dev-dropdown-options"></div>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-2">Cargo Geral <span class="text-iosRed">*</span></label>
+                  <p class="text-[10px] text-gray-400 dark:text-zinc-600 mb-2">Cargo para mencionar todos os membros registados.</p>
+                  <div class="relative" id="dev-cargo-geral-wrapper">
+                    <input type="hidden" id="dev-cargo-geral-id" value="">
+                    <select id="dev-cargo-geral" class="hidden"></select>
+                    <button type="button" class="dev-select-trigger w-full bg-[#F2F2F7] dark:bg-zinc-900/60 border border-gray-200/50 dark:border-zinc-800/50 rounded-xl px-4 py-3 text-sm flex items-center gap-2.5 text-left" onclick="devToggleRoleDropdown('geral')">
+                      <span id="dev-cargo-geral-value" class="flex-1 text-gray-400 dark:text-zinc-500">Selecionar cargo...</span>
+                      <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400 shrink-0"></i>
+                    </button>
+                    <div id="dev-cargo-geral-dropdown" class="dev-dropdown-panel hidden">
+                      <input type="text" class="dev-dropdown-search" placeholder="Procurar cargo..." oninput="devFilterRoleDropdown('geral', this.value)">
+                      <div id="dev-cargo-geral-options" class="dev-dropdown-options"></div>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wider mb-2">Canal de Logs <span class="text-iosRed">*</span></label>
+                  <p class="text-[10px] text-gray-400 dark:text-zinc-600 mb-2">Canal onde os registos serão registados.</p>
+                  <div class="relative" id="dev-canal-log-wrapper">
+                    <input type="hidden" id="dev-canal-log-id" value="">
+                    <select id="dev-canal-log" class="hidden"></select>
+                    <button type="button" class="dev-select-trigger w-full bg-[#F2F2F7] dark:bg-zinc-900/60 border border-gray-200/50 dark:border-zinc-800/50 rounded-xl px-4 py-3 text-sm flex items-center gap-2.5 text-left" onclick="devToggleChannelDropdown()">
+                      <span id="dev-canal-log-value" class="flex-1 text-gray-400 dark:text-zinc-500">Selecionar canal...</span>
+                      <i data-lucide="chevron-down" class="w-4 h-4 text-gray-400 shrink-0"></i>
+                    </button>
+                    <div id="dev-canal-log-dropdown" class="dev-dropdown-panel hidden">
+                      <input type="text" class="dev-dropdown-search" placeholder="Procurar canal..." oninput="devFilterChannelDropdown(this.value)">
+                      <div id="dev-canal-log-options" class="dev-dropdown-options"></div>
+                    </div>
                   </div>
                 </div>
                 <div class="pt-4 flex justify-end border-t border-gray-100 dark:border-zinc-800/80">
-                  <button type="submit" class="bg-iosOrange hover:bg-orange-600 text-white text-xs font-bold px-6 py-3.5 rounded-xl shadow-md active:scale-95 transition-all flex items-center gap-1.5">
-                    <i data-lucide="check-circle" class="w-4 h-4"></i>
-                    <span>Concluir Registo</span>
+                  <button type="button" onclick="devSaveDiscordConfig()" class="bg-iosOrange hover:bg-orange-600 text-white text-xs font-bold px-6 py-3.5 rounded-xl shadow-md active:scale-95 transition-all flex items-center gap-1.5">
+                    <i data-lucide="save" class="w-4 h-4"></i>
+                    <span>Salvar Configurações</span>
                   </button>
                 </div>
-              </form>
+              </div>
             </div>
             <!-- Ação -->
             <div id="dev-config-panel-acao" class="config-panel hidden">

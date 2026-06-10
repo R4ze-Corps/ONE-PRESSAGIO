@@ -3162,16 +3162,176 @@ function devSelectIndicated(name) {
 
 /* ---------- close dropdown on outside click ---------- */
 document.addEventListener('click', function devClickOutside(e) {
-  const wrapper = document.getElementById('dev-recruiter-wrapper');
-  const panel = document.getElementById('dev-recruiter-dropdown');
-  if (panel && wrapper && !wrapper.contains(e.target)) panel.classList.add('hidden');
+  const wrappers = ['dev-recruiter-wrapper', 'dev-cargo-registro-wrapper', 'dev-cargo-aprovado-wrapper', 'dev-cargo-geral-wrapper', 'dev-canal-log-wrapper'];
+  wrappers.forEach(id => {
+    const wrapper = document.getElementById(id);
+    if (!wrapper) return;
+    const panel = wrapper.querySelector('.dev-dropdown-panel');
+    if (panel && !wrapper.contains(e.target)) panel.classList.add('hidden');
+  });
 });
+
+/* ---------- config roles / channels ---------- */
+let devDiscordRoles = [];
+let devDiscordChannels = [];
+let devDiscordConfig = {};
+
+async function devFetchRoles() {
+  try {
+    const res = await fetch(`${API_BASE}/api/discord-roles`);
+    if (res.ok) devDiscordRoles = await res.json();
+  } catch (_) { devDiscordRoles = []; }
+}
+
+async function devFetchChannels() {
+  try {
+    const res = await fetch(`${API_BASE}/api/discord-channels`);
+    if (res.ok) devDiscordChannels = await res.json();
+  } catch (_) { devDiscordChannels = []; }
+}
+
+async function devLoadDiscordConfig() {
+  try {
+    const res = await fetch(`${API_BASE}/api/discord-config`);
+    if (res.ok) devDiscordConfig = await res.json();
+  } catch (_) { devDiscordConfig = {}; }
+}
+
+function renderRoleOptions(key, list) {
+  const container = document.getElementById(`dev-cargo-${key}-options`);
+  if (!container) return;
+  container.innerHTML = list.map(r => `
+    <button type="button" class="dev-member-item" data-value="${r.id}" onclick="devSelectRole('${key}','${r.id}','${r.name.replace(/'/g, "\\'")}')">
+      ${r.color ? `<span class="w-3 h-3 rounded-full shrink-0" style="background:${r.color}"></span>` : ''}
+      <span class="dev-member-name">${r.name}</span>
+    </button>
+  `).join('');
+}
+
+function renderChannelOptions(list) {
+  const container = document.getElementById('dev-canal-log-options');
+  if (!container) return;
+  container.innerHTML = list.map(c => `
+    <button type="button" class="dev-member-item" data-value="${c.id}" onclick="devSelectChannel('${c.id}','${c.name.replace(/'/g, "\\'")}')">
+      <i data-lucide="hash" class="w-3.5 h-3.5 text-gray-400 shrink-0"></i>
+      <span class="dev-member-name">${c.name}</span>
+    </button>
+  `).join('');
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function devToggleRoleDropdown(key) {
+  document.querySelectorAll('[id^="dev-cargo-"][id$="-dropdown"]').forEach(el => {
+    if (el.id !== `dev-cargo-${key}-dropdown`) el.classList.add('hidden');
+  });
+  const panel = document.getElementById(`dev-cargo-${key}-dropdown`);
+  if (!panel) return;
+  panel.classList.toggle('hidden');
+  if (!panel.classList.contains('hidden')) {
+    document.querySelector(`#dev-cargo-${key}-dropdown .dev-dropdown-search`).value = '';
+    renderRoleOptions(key, devDiscordRoles);
+    document.querySelector(`#dev-cargo-${key}-dropdown .dev-dropdown-search`)?.focus();
+  }
+}
+
+function devFilterRoleDropdown(key, query) {
+  const q = query.toLowerCase().trim();
+  const filtered = q ? devDiscordRoles.filter(r => r.name.toLowerCase().includes(q)) : devDiscordRoles;
+  renderRoleOptions(key, filtered);
+}
+
+function devSelectRole(key, roleId, roleName) {
+  const idInput = document.getElementById(`dev-cargo-${key}-id`);
+  if (idInput) idInput.value = roleId;
+  const valueEl = document.getElementById(`dev-cargo-${key}-value`);
+  if (valueEl) {
+    valueEl.innerHTML = `<span class="text-sm text-black dark:text-white font-medium">${roleName}</span>`;
+  }
+  document.getElementById(`dev-cargo-${key}-dropdown`)?.classList.add('hidden');
+  return false;
+}
+
+function devToggleChannelDropdown() {
+  const panel = document.getElementById('dev-canal-log-dropdown');
+  if (!panel) return;
+  document.querySelectorAll('[id$="-dropdown"]').forEach(el => {
+    if (el.id !== 'dev-canal-log-dropdown') el.classList.add('hidden');
+  });
+  panel.classList.toggle('hidden');
+  if (!panel.classList.contains('hidden')) {
+    document.querySelector('#dev-canal-log-dropdown .dev-dropdown-search').value = '';
+    renderChannelOptions(devDiscordChannels);
+    document.querySelector('#dev-canal-log-dropdown .dev-dropdown-search')?.focus();
+  }
+}
+
+function devFilterChannelDropdown(query) {
+  const q = query.toLowerCase().trim();
+  const filtered = q ? devDiscordChannels.filter(c => c.name.toLowerCase().includes(q)) : devDiscordChannels;
+  renderChannelOptions(filtered);
+}
+
+function devSelectChannel(channelId, channelName) {
+  const idInput = document.getElementById('dev-canal-log-id');
+  if (idInput) idInput.value = channelId;
+  const valueEl = document.getElementById('dev-canal-log-value');
+  if (valueEl) {
+    valueEl.innerHTML = `<span class="text-sm text-black dark:text-white font-medium">#${channelName}</span>`;
+  }
+  document.getElementById('dev-canal-log-dropdown')?.classList.add('hidden');
+  return false;
+}
+
+async function devSaveDiscordConfig() {
+  const registroRoleId = document.getElementById('dev-cargo-registro-id')?.value || '';
+  const aprovadoRoleId = document.getElementById('dev-cargo-aprovado-id')?.value || '';
+  const geralRoleId = document.getElementById('dev-cargo-geral-id')?.value || '';
+  const logChannelId = document.getElementById('dev-canal-log-id')?.value || '';
+  if (!registroRoleId || !aprovadoRoleId || !geralRoleId || !logChannelId) {
+    devShowToast('Preencha todos os campos antes de salvar.', true);
+    return;
+  }
+  try {
+    const res = await fetch(`${API_BASE}/api/discord-config`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ registroRoleId, aprovadoRoleId, geralRoleId, logChannelId }),
+    });
+    if (res.ok) {
+      devShowToast('Configurações salvas com sucesso!');
+    } else {
+      devShowToast('Erro ao salvar configurações.', true);
+    }
+  } catch (_) {
+    devShowToast('Erro ao salvar configurações.', true);
+  }
+}
 
 async function devShowBlockOverlay() {
   const overlay = document.getElementById('dev-block-overlay');
   if (overlay) overlay.classList.remove('hidden');
   devSwitchConfigTab('registrar');
-  await devPopulateDiscordMembers();
+  await Promise.all([devPopulateDiscordMembers(), devFetchRoles(), devFetchChannels(), devLoadDiscordConfig()]);
+  devApplyDiscordConfig();
+}
+
+function devApplyDiscordConfig() {
+  if (devDiscordConfig.registroRoleId) {
+    const role = devDiscordRoles.find(r => r.id === devDiscordConfig.registroRoleId);
+    if (role) devSelectRole('registro', role.id, role.name);
+  }
+  if (devDiscordConfig.aprovadoRoleId) {
+    const role = devDiscordRoles.find(r => r.id === devDiscordConfig.aprovadoRoleId);
+    if (role) devSelectRole('aprovado', role.id, role.name);
+  }
+  if (devDiscordConfig.geralRoleId) {
+    const role = devDiscordRoles.find(r => r.id === devDiscordConfig.geralRoleId);
+    if (role) devSelectRole('geral', role.id, role.name);
+  }
+  if (devDiscordConfig.logChannelId) {
+    const channel = devDiscordChannels.find(c => c.id === devDiscordConfig.logChannelId);
+    if (channel) devSelectChannel(channel.id, channel.name);
+  }
 }
 
 function devSwitchConfigTab(tab) {
