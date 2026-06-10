@@ -3097,7 +3097,6 @@ function renderIndicatedSuggestions(list) {
       <span class="dev-member-name">${m.name}</span>
     </button>
   `).join('');
-  container.classList.remove('hidden');
 }
 
 /* ---------- recruiter dropdown ---------- */
@@ -3137,15 +3136,17 @@ function devFilterIndicated(query) {
   const container = document.getElementById('dev-indicated-suggestions');
   if (!container) return;
   const q = query.toLowerCase().trim();
-  if (!q) { renderIndicatedSuggestions(devDiscordMembers); return; }
+  if (!q) { renderIndicatedSuggestions(devDiscordMembers); container.classList.remove('hidden'); return; }
   const filtered = devDiscordMembers.filter(m => m.name.toLowerCase().includes(q));
   renderIndicatedSuggestions(filtered);
+  container.classList.remove('hidden');
 }
 
 function devShowIndicatedSuggestions() {
   const container = document.getElementById('dev-indicated-suggestions');
   if (!container) return;
   renderIndicatedSuggestions(devDiscordMembers);
+  container.classList.remove('hidden');
 }
 
 function devHideIndicatedSuggestions() {
