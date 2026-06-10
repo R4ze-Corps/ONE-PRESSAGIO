@@ -1,10 +1,54 @@
-import { getLocalDiscordBotToken, readDataFile, writeDataFile, saveLocalDiscordBotToken } from "./_mongo.js";
+import { getDb, getLocalDiscordBotToken, saveLocalDiscordBotToken, readDataFile, writeDataFile } from "./_mongo.js";
 
 const DISCORD_API = "https://discord.com/api/v10";
 const GUILD_ID = process.env.DISCORD_GUILD_ID || "1500607972605296713";
 
-function getBotToken() {
-  return process.env.DISCORD_BOT_TOKEN || getLocalDiscordBotToken();
+async function getBotToken() {
+  if (process.env.DISCORD_BOT_TOKEN) return process.env.DISCORD_BOT_TOKEN;
+  try {
+    const db = await getDb();
+    const doc = await db.collection("site_settings").findOne({ key: "discordBotToken" });
+    if (doc?.value) return doc.value;
+  } catch (_) {}
+  return getLocalDiscordBotToken();
+}
+
+async function loadDiscordConfig() {
+  try {
+    const db = await getDb();
+    const doc = await db.collection("site_settings").findOne({ key: "discordConfig" });
+    if (doc?.value) return doc.value;
+  } catch (_) {}
+  const data = await readDataFile();
+  return data.settings?.discordConfig || {};
+}
+
+async function saveDiscordConfig(config) {
+  try {
+    const db = await getDb();
+    await db.collection("site_settings").findOneAndUpdate(
+      { key: "discordConfig" },
+      { $set: { key: "discordConfig", value: config, updatedAt: new Date() } },
+      { upsert: true },
+    );
+    return;
+  } catch (_) {}
+  const data = await readDataFile();
+  data.settings = { ...(data.settings || {}), discordConfig: config };
+  await writeDataFile(data);
+}
+
+async function saveToken(token) {
+  try {
+    const db = await getDb();
+    await db.collection("site_settings").findOneAndUpdate(
+      { key: "discordBotToken" },
+      { $set: { key: "discordBotToken", value: token, updatedAt: new Date() } },
+      { upsert: true },
+    );
+    return;
+  } catch (_) {}
+  await saveLocalDiscordBotToken(token);
 }
 
 async function handleRoles(request, response) {
@@ -85,24 +129,18 @@ async function handleUsers(request, response) {
 }
 
 async function handleConfigGet(request, response) {
-  const data = await readDataFile();
-  const config = data.settings?.discordConfig || {};
+  const config = await loadDiscordConfig();
   response.status(200).json(config);
 }
 
 async function handleConfigPost(request, response) {
   const { registroRoleId, aprovadoRoleId, geralRoleId, logChannelId } = request.body || {};
-  const data = await readDataFile();
-  data.settings = {
-    ...(data.settings || {}),
-    discordConfig: {
-      registroRoleId: registroRoleId || "",
-      aprovadoRoleId: aprovadoRoleId || "",
-      geralRoleId: geralRoleId || "",
-      logChannelId: logChannelId || "",
-    },
-  };
-  await writeDataFile(data);
+  await saveDiscordConfig({
+    registroRoleId: registroRoleId || "",
+    aprovadoRoleId: aprovadoRoleId || "",
+    geralRoleId: geralRoleId || "",
+    logChannelId: logChannelId || "",
+  });
   response.status(200).json({ saved: true });
 }
 
@@ -153,7 +191,7 @@ async function handleToken(request, response) {
   const token = String(request.body?.token || "").trim();
   if (!token) { response.status(400).json({ error: "Token do bot obrigatorio." }); return; }
 
-  await saveLocalDiscordBotToken(token);
+  await saveToken(token);
   response.status(200).json({ configured: false, saved: true });
 }
 
