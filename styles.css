@@ -4556,7 +4556,8 @@ body.developer-mode #developer-ui {
   outline-offset: 2px;
 }
 
-.dev-dropdown-panel {
+.dev-dropdown-panel:not(.hidden) {
+  display: flex;
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
@@ -4567,7 +4568,6 @@ body.developer-mode #developer-ui {
   border-radius: 12px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.12);
   max-height: 260px;
-  display: flex;
   flex-direction: column;
 }
 .dark .dev-dropdown-panel {
